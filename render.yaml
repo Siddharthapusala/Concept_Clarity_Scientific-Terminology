@@ -37,7 +37,4 @@ services:
       - key: NODE_VERSION
         value: 18.17.0
       - key: REACT_APP_API_URL
-        fromService:
-          type: web
-          name: conceptclarity-backend
-          property: url
+        value: https://concept-clarity-scientific-terminology.onrender.com
