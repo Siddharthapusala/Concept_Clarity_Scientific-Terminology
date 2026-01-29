@@ -14,7 +14,8 @@
   border-radius: 1rem;
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.08);
   width: 100%;
-  max-width: 450px;
+  max-width: 380px;
+  /* Reduced for a more compact, professional look */
   animation: fadeInUp 0.6s ease;
   backdrop-filter: blur(10px);
 }
@@ -53,9 +54,49 @@
 
 .panel-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+.panel-actions button {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  display: flex;
   justify-content: center;
-  margin-top: 0.5rem;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  height: 48px;
+  /* Consistent height */
+}
+
+/* Specific style for Logout inside panel to match others */
+.panel-actions .logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+}
+
+.panel-actions .logout-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+}
+
+@media (max-width: 600px) {
+  .panel-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .panel-actions button {
+    width: 100%;
+  }
 }
 
 @keyframes fadeInUp {
@@ -525,13 +566,26 @@
 
 @media (max-width: 480px) {
   .auth-container {
-    padding: 0.5rem;
-    padding-top: 1rem;
+    padding: 0;
+    padding-top: 0;
+    align-items: flex-start;
+    background: white;
+    /* Make background white on mobile to match card if needed, or keep gradient and make card full */
   }
 
   .auth-card {
-    padding: 1.25rem;
-    border-radius: 0.75rem;
+    padding: 1.5rem 1rem;
+    border-radius: 0;
+    box-shadow: none;
+    background: white;
+    min-height: 100vh;
+    /* Take full height */
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .auth-header {
+    margin-top: 1rem;
   }
 
   .auth-title {
@@ -542,12 +596,18 @@
     font-size: 2rem;
   }
 
-  .logo-text {
-    font-size: 1.25rem;
-  }
-
   .form-actions {
     flex-direction: column;
+  }
+
+  /* Dark mode overrides for mobile full screen */
+  .dark-mode .auth-container {
+    background: #1e293b;
+  }
+
+  .dark-mode .auth-card {
+    background: #1e293b;
+    border: none;
   }
 }
 

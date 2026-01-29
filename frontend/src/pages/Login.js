@@ -35,8 +35,16 @@ export default function Login({ onLogin }) {
       onLogin();
       navigate('/');
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || err.response?.data?.message || 'Login failed. Please check your credentials.';
-      setError(errorMessage);
+      console.error("Login Error Details:", err);
+      let msg = 'Login failed.';
+      if (err.response) {
+        msg = err.response.data?.detail || err.response.data?.message || `Server Error: ${err.response.status}`;
+      } else if (err.request) {
+        msg = "Network Error: Unable to reach the server. Check internet connection.";
+      } else {
+        msg = err.message;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

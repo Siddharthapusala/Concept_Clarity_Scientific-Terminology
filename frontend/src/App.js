@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from './services/api';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
 import Home from './pages/Home';
