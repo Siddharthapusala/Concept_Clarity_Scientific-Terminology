@@ -12,6 +12,24 @@ function App() {
     return localStorage.getItem('theme') === 'dark';
   });
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          // Verify token with backend
+          await api.get('/me');
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("Session expired or invalid", error);
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
+
   const toggleTheme = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);

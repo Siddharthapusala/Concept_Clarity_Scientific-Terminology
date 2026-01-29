@@ -56,9 +56,7 @@ export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTh
           </button>
           {isAuthenticated ? (
             <>
-              <Link to="/" className={`nav-link ${currentPath === '/' ? 'active' : ''}`}>
-                Home
-              </Link>
+
               <div className="profile-widget">
                 <button
                   className="history-icon-btn"
