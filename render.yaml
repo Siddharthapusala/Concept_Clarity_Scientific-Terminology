@@ -1,0 +1,43 @@
+services:
+  # Backend Service
+  - type: web
+    name: conceptclarity-backend
+    runtime: python
+    region: ohio
+    buildCommand: |
+      cd backend
+      pip install -r requirements.txt
+    startCommand: |
+      cd backend
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false  # User needs to input this in Render Dashboard
+      - key: DATABASE_URL
+        sync: false  # User can set this to Internal Database URL
+
+  # Frontend Static Site
+  - type: web
+    name: conceptclarity-frontend
+    runtime: node
+    region: ohio
+    buildCommand: |
+      cd frontend
+      npm install
+      npm run build
+    startCommand: |
+      cd frontend
+      npm install -g serve
+      serve -s build -l $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: conceptclarity-backend
+          property: url

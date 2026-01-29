@@ -76,8 +76,11 @@ class FastLLMService:
     def get_level_details(self, query: str, level: str) -> dict:
         """Helper to get just one level if requested"""
         full = self.get_fast_explanation(query)
+        if not full or not isinstance(full, dict):
+            full = self._get_fallback_explanation(query, 0)
+            
         return {
-            "text": full.get(level, full.get("easy")),
+            "text": full.get(level, full.get("easy", "Definition not available.")),
             "examples": full.get("examples", []),
             "related_words": full.get("related_words", [])
         }

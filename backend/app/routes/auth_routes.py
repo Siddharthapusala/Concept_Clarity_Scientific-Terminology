@@ -57,8 +57,10 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
                 .filter(User.username == user.username)
                 .first()
             )
+
         if not db_user or not verify_password(user.password, db_user.password_hash):
             raise HTTPException(401, "Invalid credentials")
+            
         token = create_token(db_user.email or db_user.username)
         return {"access_token": token}
     except HTTPException:
