@@ -19,7 +19,13 @@ const HistoryModal = ({ history, onClose, onDeleteItem, onClearAll }) => {
               <div key={item.id} className="history-item">
                 <div className="history-query">{item.query}</div>
                 <div className="history-result">{item.result}</div>
-                <div className="history-date">{new Date(item.created_at).toLocaleString()}</div>
+                <div className="history-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                  <div className="history-date">{new Date(item.created_at).toLocaleString()}</div>
+                  <div className="history-feedback">
+                    {item.feedback === 1 && <span title="Helpful">👍</span>}
+                    {item.feedback === -1 && <span title="Not Helpful">👎</span>}
+                  </div>
+                </div>
                 <button className="delete-btn" onClick={() => onDeleteItem(item.id)}>Delete</button>
               </div>
             ))

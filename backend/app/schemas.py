@@ -5,6 +5,7 @@ class UserCreate(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
     role: str
+    language: Optional[str] = "en"
     password: str
     @validator('password')
     def validate_password(cls, v):
@@ -64,6 +65,10 @@ class SearchHistoryBase(BaseModel):
     result: str
 class SearchHistoryOut(SearchHistoryBase):
     id: int
+    feedback: Optional[int] = None
     created_at: datetime
     class Config:
         orm_mode = True
+
+class FeedbackUpdate(BaseModel):
+    feedback: int

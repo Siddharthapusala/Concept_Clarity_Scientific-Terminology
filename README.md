@@ -16,7 +16,7 @@ ConceptClarity is a full-stack web application designed to explain scientific co
 -   **Backend**: Python (FastAPI), SQLAlchemy (PostgreSQL/SQLite)
 -   **AI/LLM**: Groq API (Llama 3) for high-speed inference
 
-## Setup Instructions
+## Setup Instruction
 
 ### Prerequisites
 -   Node.js (v16+)

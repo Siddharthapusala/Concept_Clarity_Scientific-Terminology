@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import './Auth.css';
 export default function Signup() {
-  const [formData, setFormData] = useState({ email: '', username: '', role: 'general_user', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ email: '', username: '', role: 'general_user', language: 'en', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -70,6 +70,7 @@ export default function Signup() {
         email: formData.email || null,
         username: formData.username || null,
         role: formData.role,
+        language: formData.language,
         password: formData.password,
       });
       const successMessage = document.createElement('div');
@@ -161,6 +162,21 @@ export default function Signup() {
               <option value="engineer">Engineer</option>
               <option value="healthcare_professional">Healthcare Professional</option>
               <option value="general_user">General User</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="language" className="form-label">Preferred Language</label>
+            <select
+              id="language"
+              name="language"
+              value={formData.language}
+              onChange={handleChange}
+              className="form-input"
+              disabled={loading}
+            >
+              <option value="en">English</option>
+              <option value="te">Telugu</option>
+              <option value="hi">Hindi</option>
             </select>
           </div>
           <div className="form-group">

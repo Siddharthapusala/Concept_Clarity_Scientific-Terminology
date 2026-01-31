@@ -60,7 +60,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# ConceptClarity specific
+# ConceptClarity specifics
 brain/
 *.log
 antigravity/

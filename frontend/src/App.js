@@ -7,25 +7,39 @@ import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
 import './App.css';
+import { translations } from './utils/translations';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('language') || 'en';
+  });
+
+  const t = translations[language] || translations['en'];
+
+  const fetchUserProfile = async () => {
+    try {
+      const res = await api.get('/me');
+      setIsAuthenticated(true);
+      if (res.data.language) {
+        setLanguage(res.data.language);
+        localStorage.setItem('language', res.data.language);
+      }
+    } catch (error) {
+      console.error("Session expired or invalid", error);
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
-        try {
-          // Verify token with backend
-          await api.get('/me');
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.error("Session expired or invalid", error);
-          localStorage.removeItem('token');
-          setIsAuthenticated(false);
-        }
+        await fetchUserProfile();
       }
     };
     checkAuth();
@@ -37,8 +51,13 @@ function App() {
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
   };
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
+  const handleLanguageChange = (lang) => {
+    setLanguage(lang);
+    localStorage.setItem('language', lang);
+  };
+
+  const handleLogin = async () => {
+    await fetchUserProfile();
   };
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -52,26 +71,40 @@ function App() {
           onLogout={handleLogout}
           isDarkMode={isDarkMode}
           toggleTheme={toggleTheme}
+          t={t}
         />
         <main className="main-content">
           <Routes>
             <Route
               path="/"
               element={
-                <Home isAuthenticated={isAuthenticated} isDarkMode={isDarkMode} />
+                <Home
+                  isAuthenticated={isAuthenticated}
+                  isDarkMode={isDarkMode}
+                  language={language}
+                  setLanguage={handleLanguageChange}
+                  t={t}
+                />
               }
             />
             <Route
               path="/profile"
               element={
-                isAuthenticated ? <Profile onLogout={handleLogout} /> : <Navigate to="/login" replace />
+                isAuthenticated ?
+                  <Profile
+                    onLogout={handleLogout}
+                    language={language}
+                    setLanguage={handleLanguageChange}
+                    t={t}
+                  /> :
+                  <Navigate to="/login" replace />
               }
             />
             <Route
               path="/login"
               element={
                 !isAuthenticated ?
-                  <Login onLogin={handleLogin} /> :
+                  <Login onLogin={handleLogin} t={t} /> :
                   <Navigate to="/" replace />
               }
             />
@@ -79,7 +112,7 @@ function App() {
               path="/signup"
               element={
                 !isAuthenticated ?
-                  <Signup /> :
+                  <Signup t={t} /> :
                   <Navigate to="/" replace />
               }
             />

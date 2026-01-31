@@ -9,6 +9,7 @@ class User(Base):
     role = Column(String(30), nullable=False, default="general_user")
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
+    language = Column(String(10), default="en")
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 class Term(Base):
@@ -22,4 +23,5 @@ class SearchHistory(Base):
     user_id = Column(Integer, index=True)
     query = Column(String, nullable=False)
     result = Column(Text, nullable=False)
+    feedback = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

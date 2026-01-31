@@ -5,7 +5,7 @@ from ..utils.fast_llm_service import llm_service
 from ..database import SessionLocal
 from ..models import User, SearchHistory
 from ..auth import decode_token
-from ..schemas import SearchHistoryOut
+from ..schemas import SearchHistoryOut, FeedbackUpdate
 import json
 router = APIRouter()
 def get_db():
@@ -32,12 +32,17 @@ def get_current_user(authorization: Optional[str] = Header(default=None), db: Se
 def search_term(
     q: str,
     level: str = Query(None, pattern="^(easy|medium|hard)$"),
+    language: str = Query("English", pattern="^(English|Telugu|Hindi|en|te|hi)$"),
     user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     try:
+        # Map codes to full names for LLM service
+        lang_map = {"en": "English", "te": "Telugu", "hi": "Hindi"}
+        language = lang_map.get(language, language)
+
         if level:
-            level_details = llm_service.get_level_details(q, level)
+            level_details = llm_service.get_level_details(q, level, language)
             definition = level_details.get("text", "")
             result_data = {
                 "term": q,
@@ -48,7 +53,7 @@ def search_term(
                 "confidence": "medium"
             }
         else:
-            llm_explanation = llm_service.get_fast_explanation(q)
+            llm_explanation = llm_service.get_fast_explanation(q, language)
             definition = llm_explanation.get("easy") if isinstance(llm_explanation, dict) else llm_explanation
             result_data = {
                 "term": q,
@@ -70,6 +75,9 @@ def search_term(
             )
             db.add(history_entry)
             db.commit()
+            db.refresh(history_entry)  # Refresh to get the generated ID
+            result_data["history_id"] = history_entry.id # Add ID to response
+            
         return result_data
     except Exception as e:
         return {
@@ -106,3 +114,18 @@ def clear_history(
     db.query(SearchHistory).filter(SearchHistory.user_id == user.id).delete()
     db.commit()
     return {"status": "ok"}
+
+@router.put("/history/{history_id}/feedback")
+def update_feedback(
+    history_id: int,
+    feedback_data: FeedbackUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    item = db.query(SearchHistory).filter(SearchHistory.id == history_id, SearchHistory.user_id == user.id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="History item not found")
+    
+    item.feedback = feedback_data.feedback
+    db.commit()
+    return {"status": "ok", "feedback": item.feedback}

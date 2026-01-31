@@ -16,11 +16,11 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: GROQ_API_KEY
-        sync: false  # User needs to input this in Render Dashboard
+        sync: false  
       - key: DATABASE_URL
-        sync: false  # User can set this to Internal Database URL
+        sync: false  
 
-  # Frontend Static Site
+  
   - type: web
     name: conceptclarity-frontend
     runtime: node

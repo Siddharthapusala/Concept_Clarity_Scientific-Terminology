@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import './Auth.css';
-export default function Profile({ onLogout }) {
+export default function Profile({ onLogout, language, setLanguage, t }) {
   const [data, setData] = useState(null);
-  const [history, setHistory] = useState([]);
   const [edit, setEdit] = useState(false);
-  const [form, setForm] = useState({ first_name: '', last_name: '', username: '' });
+  const [form, setForm] = useState({ first_name: '', last_name: '', username: '', language: 'en' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const text = t || {};
+
   const fetchMe = async () => {
     try {
       const res = await api.get('/me', {
@@ -20,23 +21,14 @@ export default function Profile({ onLogout }) {
       setForm({
         first_name: res.data.first_name || '',
         last_name: res.data.last_name || '',
-        username: res.data.username || ''
+        username: res.data.username || '',
+        language: res.data.language || 'en'
       });
       try {
         sessionStorage.setItem('profileCache', JSON.stringify(res.data));
       } catch { }
     } catch (e) {
-      setError('Failed to load profile');
-    }
-  };
-  const fetchHistory = async () => {
-    try {
-      const res = await api.get('/history', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setHistory(res.data);
-    } catch (e) {
-      console.error('Failed to load history', e);
+      setError(text.errorGeneric || 'Failed to load profile');
     }
   };
   useEffect(() => {
@@ -48,12 +40,12 @@ export default function Profile({ onLogout }) {
         setForm({
           first_name: v.first_name || '',
           last_name: v.last_name || '',
-          username: v.username || ''
+          username: v.username || '',
+          language: v.language || 'en'
         });
       } catch { }
     }
     fetchMe();
-    fetchHistory();
   }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,6 +56,9 @@ export default function Profile({ onLogout }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchMe();
+      if (form.language) {
+        setLanguage(form.language);
+      }
       setEdit(false);
     } catch (e) {
       const msg = e.response?.data?.detail || e.response?.data?.message || 'Update failed';
@@ -80,7 +75,7 @@ export default function Profile({ onLogout }) {
             <div className="logo-icon">🧠</div>
             <div className="logo-text">ConceptClarity</div>
           </div>
-          <h2 className="auth-title">Profile</h2>
+          <h2 className="auth-title">{text.profile || 'Profile'}</h2>
         </div>
         <p>Loading...</p>
       </div>
@@ -93,38 +88,44 @@ export default function Profile({ onLogout }) {
           <div className="logo-icon">🧠</div>
           <div className="logo-text">ConceptClarity</div>
         </div>
-        <h2 className="auth-title">Profile</h2>
+        <h2 className="auth-title">{text.profile || 'Profile'}</h2>
       </div>
+
+
 
       {!edit ? (
         <div className="auth-form">
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
-            <label className="form-label">Username</label>
+            <label className="form-label">{text.username || 'Username'}</label>
             <div className="form-input">{data.username || '—'}</div>
           </div>
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label className="form-label">{text.email || 'Email'}</label>
             <div className="form-input">{data.email || '—'}</div>
           </div>
           <div className="form-group">
-            <label className="form-label">Role</label>
+            <label className="form-label">{text.role || 'Role'}</label>
             <div className="form-input">{data.role}</div>
           </div>
           <div className="form-group">
-            <label className="form-label">First Name</label>
+            <label className="form-label">{text.firstName || 'First Name'}</label>
             <div className="form-input">{data.first_name || '—'}</div>
           </div>
           <div className="form-group">
-            <label className="form-label">Last Name</label>
+            <label className="form-label">{text.lastName || 'Last Name'}</label>
             <div className="form-input">{data.last_name || '—'}</div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">{text.language || 'Language'}</label>
+            <div className="form-input">{data.language || 'en'}</div>
           </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
-            <label htmlFor="first_name" className="form-label">First Name</label>
+            <label htmlFor="first_name" className="form-label">{text.firstName || 'First Name'}</label>
             <input
               id="first_name"
               name="first_name"
@@ -136,7 +137,7 @@ export default function Profile({ onLogout }) {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="last_name" className="form-label">Last Name</label>
+            <label htmlFor="last_name" className="form-label">{text.lastName || 'Last Name'}</label>
             <input
               id="last_name"
               name="last_name"
@@ -148,7 +149,7 @@ export default function Profile({ onLogout }) {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="username" className="form-label">Username</label>
+            <label htmlFor="username" className="form-label">{text.username || 'Username'}</label>
             <input
               id="username"
               name="username"
@@ -160,31 +161,46 @@ export default function Profile({ onLogout }) {
               autoComplete="username"
             />
           </div>
+          <div className="form-group">
+            <label htmlFor="language" className="form-label">{text.language || 'Language'}</label>
+            <select
+              id="language"
+              name="language"
+              value={form.language}
+              onChange={(e) => setForm({ ...form, language: e.target.value })}
+              className="form-input"
+              disabled={loading}
+            >
+              <option value="en">English</option>
+              <option value="te">Telugu</option>
+              <option value="hi">Hindi</option>
+            </select>
+          </div>
           <div className="form-actions">
             <button type="submit" disabled={loading} className="auth-button save-btn">
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? 'Saving...' : (text.saveChanges || 'Save Changes')}
             </button>
             <button type="button" className="nav-button logout-btn" onClick={() => setEdit(false)}>
-              Cancel
+              {text.cancel || 'Cancel'}
             </button>
           </div>
         </form>
       )}
-
+      
       <div className="panel-actions" style={{ marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
         <button
           className="auth-button"
           onClick={() => navigate(-1)}
           disabled={loading}
         >
-          Back
+          {text.back || 'Back'}
         </button>
         <button
           className="auth-button"
           onClick={() => setEdit(!edit)}
           disabled={loading}
         >
-          {edit ? 'Close Edit' : 'Edit Profile'}
+          {edit ? (text.closeEdit || 'Close Edit') : (text.editProfile || 'Edit Profile')}
         </button>
         <button
           className="nav-button logout-btn"
@@ -192,9 +208,9 @@ export default function Profile({ onLogout }) {
           disabled={loading}
           style={{ background: '#ef4444', color: 'white', border: 'none' }}
         >
-          Logout
+          {text.logout || 'Logout'}
         </button>
       </div>
-    </div>
+    </div >
   );
 }

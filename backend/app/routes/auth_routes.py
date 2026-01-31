@@ -25,6 +25,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
             email=user.email,
             username=user.username,
             role=role,
+            language=user.language,
             password_hash=hash_password(user.password)
         )
         db.add(new_user)
@@ -86,6 +87,7 @@ def me(authorization: Optional[str] = Header(default=None), db: Session = Depend
         "role": user.role,
         "first_name": user.first_name,
         "last_name": user.last_name,
+        "language": user.language,
     }
 @router.put("/profile")
 def update_profile(
@@ -105,12 +107,15 @@ def update_profile(
     new_username = data.get("username")
     first_name = data.get("first_name")
     last_name = data.get("last_name")
+    language = data.get("language")
     if new_username and new_username != user.username:
         if db.query(User).filter(User.username == new_username).first():
             raise HTTPException(400, "Username already exists")
         user.username = new_username
     user.first_name = first_name
     user.last_name = last_name
+    if language:
+        user.language = language
     db.add(user)
     db.commit()
     return {"message": "Profile updated successfully"}
