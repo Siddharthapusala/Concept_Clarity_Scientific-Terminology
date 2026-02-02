@@ -57,7 +57,7 @@ function App() {
   };
 
   const handleLogin = async () => {
-    await fetchUserProfile();
+    return await fetchUserProfile();
   };
   const handleLogout = () => {
     localStorage.removeItem('token');

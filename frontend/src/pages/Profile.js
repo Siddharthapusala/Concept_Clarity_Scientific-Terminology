@@ -4,6 +4,10 @@ import { api } from '../services/api';
 import './Auth.css';
 export default function Profile({ onLogout, language, setLanguage, t }) {
   const [data, setData] = useState(null);
+  const [review, setReview] = useState({ rating: 0, comment: '' });
+  const [editingReview, setEditingReview] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState('');
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({ first_name: '', last_name: '', username: '', language: 'en' });
   const [loading, setLoading] = useState(false);
@@ -11,6 +15,35 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const text = t || {};
+
+  const fetchReview = async () => {
+    try {
+      const res = await api.get('/review');
+      if (res.data) {
+        setReview({ id: res.data.id, rating: res.data.rating, comment: res.data.comment || '' });
+      }
+    } catch (e) {
+      // It's okay if no review exists
+    }
+  };
+
+  const submitReview = async () => {
+    setSearchLoading(true);
+    setReviewMessage('');
+    try {
+      await api.post('/review', { rating: review.rating, comment: review.comment });
+      setReviewMessage('✅ Review Updated Successfully!');
+      // Re-fetch to ensure we have the ID and correct state
+      await fetchReview();
+
+      // Clear message after 3 seconds
+      setTimeout(() => setReviewMessage(''), 3000);
+    } catch (e) {
+      setReviewMessage('❌ Failed to submit review.');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   const fetchMe = async () => {
     try {
@@ -46,6 +79,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
       } catch { }
     }
     fetchMe();
+    fetchReview();
   }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -186,7 +220,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
           </div>
         </form>
       )}
-      
+
       <div className="panel-actions" style={{ marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
         <button
           className="auth-button"
@@ -210,6 +244,98 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
         >
           {text.logout || 'Logout'}
         </button>
+      </div>
+
+      <div className="review-section" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '2px dashed #e2e8f0' }}>
+        <h3 className="auth-title" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+          {text.rateApp || 'Rate This App'}
+        </h3>
+
+        {!review.id || editingReview ? (
+          <>
+            <div className="star-rating-container">
+              <div className="star-rating">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    className={`star-btn ${star <= (review.rating || 0) ? 'filled' : ''}`}
+                    onClick={() => setReview({ ...review, rating: star })}
+                    title={`${star} Stars`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <p className="rating-label">
+                {review.rating === 1 ? 'Poor' :
+                  review.rating === 2 ? 'Fair' :
+                    review.rating === 3 ? 'Good' :
+                      review.rating === 4 ? 'Very Good' :
+                        review.rating === 5 ? 'Excellent!' : 'Tap a star to rate'}
+              </p>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+              <label className="form-label">{text.writeReview || 'Write a Review (Optional)'}</label>
+              <textarea
+                className="form-input"
+                rows="3"
+                placeholder="Tell us what you think..."
+                value={review.comment}
+                onChange={(e) => setReview({ ...review, comment: e.target.value })}
+                disabled={searchLoading}
+              ></textarea>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button
+                className="auth-button save-btn"
+                onClick={submitReview}
+                disabled={searchLoading || review.rating === 0}
+                style={{ flex: 1 }}
+              >
+                {searchLoading ? 'Submitting...' : (reviewMessage.includes('Success') ? 'Updated!' : (review.id ? (text.updateReview || 'Update Review') : (text.submitReview || 'Submit Review')))}
+              </button>
+              {review.id && (
+                <button
+                  className="nav-button logout-btn"
+                  onClick={() => { setEditingReview(false); fetchReview(); }} // Cancel edit and reset
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+            {reviewMessage && <p style={{ marginTop: '1rem', color: reviewMessage.includes('Success') ? 'green' : 'red' }}>{reviewMessage}</p>}
+          </>
+        ) : (
+          <div className="review-display" style={{ background: 'rgba(255,255,255,0.5)', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div className="star-rating" style={{ pointerEvents: 'none' }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  className={`star-btn ${star <= (review.rating || 0) ? 'filled' : ''}`}
+                  style={{ fontSize: '2.5rem' }}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            {review.comment && (
+              <p style={{ marginTop: '1rem', fontStyle: 'italic', color: '#4a5568', textAlign: 'center' }}>
+                "{review.comment}"
+              </p>
+            )}
+            <button
+              className="auth-button"
+              onClick={() => setEditingReview(true)}
+              style={{ marginTop: '1.5rem', width: '100%' }}
+            >
+              {text.editReview || 'Edit Review'}
+            </button>
+          </div>
+        )}
       </div>
     </div >
   );

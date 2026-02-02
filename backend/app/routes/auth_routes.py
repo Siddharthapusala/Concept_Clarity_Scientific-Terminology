@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ..database import SessionLocal
 from ..models import User
 from ..schemas import UserCreate, UserLogin
+from datetime import datetime
 from ..security import hash_password, verify_password
 from ..auth import create_token, decode_token
 router = APIRouter()
@@ -119,3 +120,58 @@ def update_profile(
     db.add(user)
     db.commit()
     return {"message": "Profile updated successfully"}
+
+from ..models import AppReview
+from ..schemas import AppReviewCreate, AppReviewOut
+
+@router.post("/review")
+def submit_review(
+    review: AppReviewCreate,
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db)
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Missing or invalid authorization header")
+    token = authorization.split(" ", 1)[1]
+    sub = decode_token(token)
+    if not sub:
+        raise HTTPException(401, "Invalid token")
+    user = db.query(User).filter((User.email == sub) | (User.username == sub)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    existing_review = db.query(AppReview).filter(AppReview.user_id == user.id).first()
+    if existing_review:
+        existing_review.rating = review.rating
+        existing_review.comment = review.comment
+        existing_review.created_at = datetime.utcnow()
+    else:
+        new_review = AppReview(
+            user_id=user.id,
+            rating=review.rating,
+            comment=review.comment
+        )
+        db.add(new_review)
+    
+    db.commit()
+    return {"message": "Review submitted successfully"}
+
+@router.get("/review", response_model=AppReviewOut)
+def get_review(
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db)
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Missing or invalid authorization header")
+    token = authorization.split(" ", 1)[1]
+    sub = decode_token(token)
+    if not sub:
+        raise HTTPException(401, "Invalid token")
+    user = db.query(User).filter((User.email == sub) | (User.username == sub)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    review = db.query(AppReview).filter(AppReview.user_id == user.id).first()
+    if not review:
+        raise HTTPException(404, "No review found")
+    return review

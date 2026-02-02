@@ -32,7 +32,7 @@ export default function Login({ onLogin }) {
       const payload = isEmail(formData.identifier) ? { email: formData.identifier } : { username: formData.identifier };
       const res = await api.post('/login', { ...payload, password: formData.password });
       localStorage.setItem('token', res.data.access_token);
-      onLogin();
+      await onLogin();
       navigate('/');
     } catch (err) {
       console.error("Login Error Details:", err);

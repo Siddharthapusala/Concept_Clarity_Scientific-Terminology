@@ -25,3 +25,11 @@ class SearchHistory(Base):
     result = Column(Text, nullable=False)
     feedback = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class AppReview(Base):
+    __tablename__ = "app_reviews"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, index=True)
+    rating = Column(Integer, nullable=False)  # 1-5
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

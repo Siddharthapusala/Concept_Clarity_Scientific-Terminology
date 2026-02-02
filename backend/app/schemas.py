@@ -72,3 +72,20 @@ class SearchHistoryOut(SearchHistoryBase):
 
 class FeedbackUpdate(BaseModel):
     feedback: int
+
+class AppReviewCreate(BaseModel):
+    rating: int  # 1-5
+    comment: Optional[str] = None
+    @validator('rating')
+    def validate_rating(cls, v):
+        if not (1 <= v <= 5):
+            raise ValueError('Rating must be between 1 and 5')
+        return v
+
+class AppReviewOut(BaseModel):
+    id: int
+    rating: int
+    comment: Optional[str]
+    created_at: datetime
+    class Config:
+        orm_mode = True

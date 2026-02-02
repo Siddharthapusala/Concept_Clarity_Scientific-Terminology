@@ -53,7 +53,7 @@ class FastLLMService:
             )
             completion = self.client.chat.completions.create(
                 messages=[
-                    {"role": "system", "content": f"You are a strict science tutor fluent in {language}. You must output valid JSON. Keys must be in English. All values (definitions, examples) MUST be written in {language} script. Do not output English text for the explanations."},
+                    {"role": "system", "content": f"You are a strict science tutor fluent in {language}. You must output valid JSON. Keys must be in English. All values (definitions, examples) MUST be written in {language} script. Do not output English text for the explanations. If {language} is Telugu, use legible and standard Telugu grammar."},
                     {"role": "user", "content": prompt}
                 ],
                 model=self.text_model,

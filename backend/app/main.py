@@ -9,7 +9,10 @@ Base.metadata.create_all(engine)
 app = FastAPI(title="ConceptClarity API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://concept-clarity-scientific-terminology.onrender.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

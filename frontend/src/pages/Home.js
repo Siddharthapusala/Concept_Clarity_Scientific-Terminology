@@ -297,7 +297,51 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
                     </div>
                   )}
                 </div>
-                <div className="line-text">{result}</div>
+                <div className="line-text">
+                  {(() => {
+                    try {
+                      // Attempt to parse if it looks like JSON
+                      if (result && result.trim().startsWith('{')) {
+                        const parsed = JSON.parse(result);
+                        return (
+                          <div className="structured-result">
+                            {parsed.key_concept && (
+                              <div className="concept-block">
+                                <strong>Key Concept:</strong> {parsed.key_concept}
+                              </div>
+                            )}
+                            {parsed.definition && (
+                              <div className="def-sub-block">
+                                <strong>Definition:</strong> {parsed.definition}
+                              </div>
+                            )}
+                            {parsed.explanation && (
+                              <div className="expl-sub-block">
+                                <strong>Explanation:</strong>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                  {Array.isArray(parsed.explanation)
+                                    ? parsed.explanation.map((line, i) => <li key={i}>{line}</li>)
+                                    : <li>{parsed.explanation}</li>
+                                  }
+                                </ul>
+                              </div>
+                            )}
+                            {parsed.real_world_application && (
+                              <div className="app-sub-block" style={{ marginTop: '1rem', fontStyle: 'italic', color: '#555' }}>
+                                <strong>Real World Application:</strong> {parsed.real_world_application}
+                              </div>
+                            )}
+                            {/* Fallback if parsed but keys don't match */}
+                            {!parsed.key_concept && !parsed.definition && !parsed.explanation && JSON.stringify(parsed)}
+                          </div>
+                        );
+                      }
+                      return result;
+                    } catch (e) {
+                      return result;
+                    }
+                  })()}
+                </div>
               </div>
               {examples && examples.length > 0 && examples.some(ex => ex && ex.trim().length > 3) ? (
                 <div className="result-line example-block">
