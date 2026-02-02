@@ -47,49 +47,59 @@ export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTh
           ConceptClarity
         </Link>
         <div className="nav-menu">
-          <button
-            className="theme-toggle-btn"
-            onClick={toggleTheme}
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </button>
-          {isAuthenticated ? (
+          {!currentPath.includes('admin') && (
             <>
-
-              <div className="profile-widget">
-                <button
-                  className="history-icon-btn"
-                  onClick={toggleHistory}
-                  title="Search History"
-                >
-                  <svg className="history-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </button>
-                <button className="profile-icon-btn" onClick={goProfile}>
-                  <svg className="user-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="8" r="4"></circle>
-                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                  </svg>
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className={`nav-link ${currentPath === '/login' || currentPath === '/' ? 'active' : ''}`}
+              <button
+                className="theme-toggle-btn"
+                onClick={toggleTheme}
+                title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
               >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className={`nav-button signup-btn ${currentPath === '/signup' || currentPath === '/' ? 'active' : ''}`}
-              >
-                Sign Up
-              </Link>
+                {isDarkMode ? '☀️' : '🌙'}
+              </button>
+              {isAuthenticated ? (
+                <>
+                  <div className="profile-widget">
+                    <button
+                      className="history-icon-btn"
+                      onClick={toggleHistory}
+                      title="Search History"
+                    >
+                      <svg className="history-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </button>
+                    <button className="profile-icon-btn" onClick={goProfile}>
+                      <svg className="user-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                      </svg>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className={`nav-link ${currentPath === '/login' || currentPath === '/' ? 'active' : ''}`}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className={`nav-button signup-btn ${currentPath === '/signup' || currentPath === '/' ? 'active' : ''}`}
+                  >
+                    Sign Up
+                  </Link>
+                  <Link
+                    to="/admin-login"
+                    className={`nav-link ${currentPath === '/admin-login' ? 'active' : ''}`}
+                    style={{ marginLeft: '1rem' }}
+                  >
+                    Admin
+                  </Link>
+                </>
+              )}
             </>
           )}
         </div>

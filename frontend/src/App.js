@@ -5,6 +5,8 @@ import Signup from './pages/Signup';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 import Navbar from './components/Navbar';
 import './App.css';
 import { translations } from './utils/translations';
@@ -116,6 +118,8 @@ function App() {
                   <Navigate to="/" replace />
               }
             />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
           </Routes>
         </main>
       </div>

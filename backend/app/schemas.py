@@ -39,7 +39,8 @@ class UserCreate(BaseModel):
             'journalist',
             'engineer',
             'healthcare_professional',
-            'general_user'
+            'general_user',
+            'admin'
         }
         if v not in allowed:
             raise ValueError(f'Role must be one of {allowed}')
@@ -47,6 +48,7 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
+    role: Optional[str] = None
     password: str
     @validator('username', always=True)
     def validate_login_identifier(cls, v, values):

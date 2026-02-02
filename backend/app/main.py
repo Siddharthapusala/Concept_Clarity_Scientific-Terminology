@@ -4,14 +4,15 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from .database import Base, engine
-from .routes import auth_routes, search_routes
+from .routes import auth_routes, search_routes, admin
 Base.metadata.create_all(engine)
 app = FastAPI(title="ConceptClarity API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://concept-clarity-scientific-terminology.onrender.com"
+        "https://concept-clarity-scientific-terminology.onrender.com",
+        "https://concept-clarity-scientific-terminology-1.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -19,3 +20,4 @@ app.add_middleware(
 )
 app.include_router(auth_routes.router)
 app.include_router(search_routes.router)
+app.include_router(admin.router)
