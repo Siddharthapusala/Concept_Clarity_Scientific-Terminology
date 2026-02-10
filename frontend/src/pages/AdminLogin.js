@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import './Admin.css';
 
+
 export default function AdminLogin() {
     const [formData, setFormData] = useState({
         username: '',
@@ -46,15 +47,7 @@ export default function AdminLogin() {
                 </div>
 
                 {error && (
-                    <div style={{
-                        background: '#fef2f2',
-                        color: '#dc2626',
-                        padding: '0.75rem',
-                        borderRadius: '0.5rem',
-                        fontSize: '0.875rem',
-                        marginBottom: '1.5rem',
-                        textAlign: 'center'
-                    }}>
+                    <div className="admin-error-message">
                         {error}
                     </div>
                 )}

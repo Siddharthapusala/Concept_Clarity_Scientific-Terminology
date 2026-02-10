@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import './App.css';
 import { translations } from './utils/translations';
 
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -119,7 +120,15 @@ function App() {
               }
             />
             <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <AdminDashboard
+                  isDarkMode={isDarkMode}
+                  toggleTheme={toggleTheme}
+                />
+              }
+            />
           </Routes>
         </main>
       </div>

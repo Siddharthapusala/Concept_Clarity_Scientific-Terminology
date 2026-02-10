@@ -9,3 +9,5 @@ requests
 email-validator
 python-multipart
 groq
+youtube-search-python
+wikipedia

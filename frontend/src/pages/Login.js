@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import './Auth.css';
+
+
 export default function Login({ onLogin }) {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [error, setError] = useState('');
@@ -9,17 +11,21 @@ export default function Login({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
   useEffect(() => {
     if (location.state?.message) {
       setError(location.state.message);
     }
   }, [location.state]);
+
   const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const isUsername = (v) => /^[a-zA-Z0-9_]{3,20}$/.test(v);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isEmail(formData.identifier) && !isUsername(formData.identifier)) {
@@ -28,6 +34,7 @@ export default function Login({ onLogin }) {
     }
     setLoading(true);
     setError('');
+
     try {
       const payload = isEmail(formData.identifier) ? { email: formData.identifier } : { username: formData.identifier };
       const res = await api.post('/login', { ...payload, password: formData.password });
@@ -49,6 +56,7 @@ export default function Login({ onLogin }) {
       setLoading(false);
     }
   };
+
   return (
     <div className="auth-container">
       <div className="auth-card">

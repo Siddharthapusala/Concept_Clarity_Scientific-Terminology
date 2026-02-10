@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import './Admin.css';
 import '../components/HistoryModal.css';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ isDarkMode, toggleTheme }) {
     const [stats, setStats] = useState(null);
     const [error, setError] = useState('');
     const [showUsersModal, setShowUsersModal] = useState(false);
@@ -81,18 +81,25 @@ export default function AdminDashboard() {
     return (
         <div className="admin-page">
             <div className="admin-container">
-                {/* Header */}
                 <header className="admin-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <span style={{ fontSize: '1.75rem' }}>🛡️</span>
                         <h1 className="admin-title">Admin Dashboard</h1>
                     </div>
-                    <button onClick={handleLogout} className="admin-logout-btn">
-                        Sign Out
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <button
+                            className="admin-theme-btn"
+                            onClick={toggleTheme}
+                            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                        >
+                            {isDarkMode ? '☀️' : '🌙'}
+                        </button>
+                        <button onClick={handleLogout} className="admin-logout-btn">
+                            Sign Out
+                        </button>
+                    </div>
                 </header>
 
-                {/* Stats Grid */}
                 <div className="stats-grid">
                     <div
                         className="stat-card blue"
@@ -119,9 +126,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Main Content Grid */}
                 <div className="admin-section-grid">
-                    {/* Chart Section */}
                     <div className="chart-card">
                         <h2 className="section-title">Search Trend Analysis</h2>
                         <div style={{ height: '350px', width: '100%' }}>
@@ -132,25 +137,31 @@ export default function AdminDashboard() {
                                         <XAxis
                                             dataKey="word"
                                             stroke="#9ca3af"
-                                            tick={{ fill: '#6b7280' }}
+                                            tick={{ fill: '#6b7280', fontSize: 12 }}
                                             axisLine={false}
                                             tickLine={false}
+                                            interval={0}
+                                            angle={-30}
+                                            textAnchor="end"
+                                            height={60}
                                         />
                                         <YAxis
                                             allowDecimals={false}
                                             stroke="#9ca3af"
-                                            tick={{ fill: '#6b7280' }}
+                                            tick={{ fill: '#6b7280', fontSize: 12 }}
                                             axisLine={false}
                                             tickLine={false}
                                         />
                                         <Tooltip
-                                            cursor={{ fill: '#f3f4f6' }}
+                                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                                             contentStyle={{
-                                                backgroundColor: '#fff',
-                                                border: 'none',
+                                                backgroundColor: '#1e293b',
+                                                border: '1px solid #334155',
                                                 borderRadius: '8px',
-                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                                color: '#f1f5f9'
                                             }}
+                                            itemStyle={{ color: '#f1f5f9' }}
+                                            labelStyle={{ color: '#94a3b8' }}
                                         />
                                         <Bar
                                             dataKey="count"
@@ -169,7 +180,6 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    {/* List Section */}
                     <div className="chart-card">
                         <h2 className="section-title">Top Searches</h2>
                         <div className="admin-list">
@@ -193,7 +203,6 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Users Modal */}
                 {showUsersModal && (
                     <div className="admin-modal-overlay" onClick={() => setShowUsersModal(false)}>
                         <div className="admin-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -203,46 +212,40 @@ export default function AdminDashboard() {
                             </div>
                             <div className="admin-modal-body">
                                 {loadingUsers ? (
-                                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--admin-text-secondary)' }}>Loading user data...</div>
+                                    <div className="loading-text">Loading user data...</div>
                                 ) : (
-                                    <div style={{ overflowX: 'auto' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                    <div className="table-container">
+                                        <table className="admin-table">
                                             <thead>
-                                                <tr style={{ background: 'var(--admin-bg)', borderBottom: '2px solid var(--admin-border)' }}>
-                                                    <th style={{ padding: '1rem', fontWeight: '600', color: 'var(--admin-text-main)' }}>Username</th>
-                                                    <th style={{ padding: '1rem', fontWeight: '600', color: 'var(--admin-text-main)' }}>Email</th>
-                                                    <th style={{ padding: '1rem', fontWeight: '600', color: 'var(--admin-text-main)' }}>Role</th>
-                                                    <th style={{ padding: '1rem', fontWeight: '600', color: 'var(--admin-text-main)' }}>Reviews</th>
+                                                <tr>
+                                                    <th>Username</th>
+                                                    <th>Email</th>
+                                                    <th>Role</th>
+                                                    <th>Reviews</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {users.map((user) => (
-                                                    <tr key={user.id} style={{ borderBottom: '1px solid var(--admin-border)' }}>
-                                                        <td style={{ padding: '1rem', color: 'var(--admin-text-main)' }}>{user.username}</td>
-                                                        <td style={{ padding: '1rem', color: 'var(--admin-text-secondary)' }}>{user.email || 'N/A'}</td>
-                                                        <td style={{ padding: '1rem' }}>
-                                                            <span style={{
-                                                                background: user.role === 'admin' ? '#e0e7ff' : '#f3f4f6',
-                                                                color: user.role === 'admin' ? '#4338ca' : '#374151',
-                                                                padding: '0.25rem 0.5rem',
-                                                                borderRadius: '0.25rem',
-                                                                fontSize: '0.875rem'
-                                                            }}>
+                                                    <tr key={user.id} className="admin-table-row">
+                                                        <td className="font-medium">{user.username}</td>
+                                                        <td className="text-secondary">{user.email || 'N/A'}</td>
+                                                        <td>
+                                                            <span className={`role-badge ${user.role}`}>
                                                                 {user.role}
                                                             </span>
                                                         </td>
-                                                        <td style={{ padding: '1rem' }}>
+                                                        <td>
                                                             {user.reviews && user.reviews.length > 0 ? (
                                                                 user.reviews.map((rev, i) => (
-                                                                    <div key={i} style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                                                        <span style={{ color: '#fbbf24' }}>{'★'.repeat(rev.rating)}</span>
-                                                                        <span style={{ color: 'var(--admin-text-secondary)', marginLeft: '0.5rem' }}>
+                                                                    <div key={i} className="review-item">
+                                                                        <span className="star-rating">{'★'.repeat(rev.rating)}</span>
+                                                                        <span className="review-text">
                                                                             {rev.comment ? `"${rev.comment.substring(0, 30)}${rev.comment.length > 30 ? '...' : ''}"` : ''}
                                                                         </span>
                                                                     </div>
                                                                 ))
                                                             ) : (
-                                                                <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>No reviews</span>
+                                                                <span className="no-reviews">No reviews</span>
                                                             )}
                                                         </td>
                                                     </tr>

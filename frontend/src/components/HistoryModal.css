@@ -100,6 +100,7 @@
   margin-bottom: 6px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -131,4 +132,57 @@
   text-align: center;
   color: #999;
   margin-top: 50px;
+}
+
+/* Dark Mode Support */
+.navbar.dark .history-modal-content {
+  background: #1a202c;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.4);
+}
+
+.navbar.dark .history-header {
+  border-bottom-color: #2d3748;
+}
+
+.navbar.dark .history-header h3 {
+  color: #f7fafc;
+}
+
+.navbar.dark .close-btn {
+  color: #a0aec0;
+}
+
+.navbar.dark .close-btn:hover {
+  color: #fff;
+}
+
+.navbar.dark .clear-btn {
+  background: #2d3748;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+.navbar.dark .clear-btn:hover {
+  background: #4a5568;
+}
+
+.navbar.dark .history-item {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+.navbar.dark .history-query {
+  color: #e2e8f0;
+}
+
+.navbar.dark .history-result {
+  color: #cbd5e1;
+}
+
+.navbar.dark .history-date {
+  color: #718096;
+}
+
+.navbar.dark .no-history {
+  color: #718096;
 }

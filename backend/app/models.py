@@ -1,8 +1,11 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from .database import Base
 from datetime import datetime
+
+
 class User(Base):
     __tablename__ = "users"
+    
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(255), unique=True, index=True, nullable=True)
     username = Column(String(50), unique=True, index=True, nullable=True)
@@ -12,13 +15,19 @@ class User(Base):
     language = Column(String(10), default="en")
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Term(Base):
     __tablename__ = "terms"
+    
     id = Column(Integer, primary_key=True)
     term = Column(String, unique=True)
     definition = Column(Text)
+
+
 class SearchHistory(Base):
     __tablename__ = "search_history"
+    
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, index=True)
     query = Column(String, nullable=False)
@@ -26,10 +35,12 @@ class SearchHistory(Base):
     feedback = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
 class AppReview(Base):
     __tablename__ = "app_reviews"
+    
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, index=True)
-    rating = Column(Integer, nullable=False)  # 1-5
+    rating = Column(Integer, nullable=False)
     comment = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

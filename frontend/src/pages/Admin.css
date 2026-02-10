@@ -20,6 +20,16 @@
     --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+.dark-mode {
+    --admin-bg: #0f172a;
+    --admin-surface: #1e293b;
+    --admin-text-main: #f1f5f9;
+    --admin-text-secondary: #94a3b8;
+    --admin-border: #334155;
+    --admin-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
 /* Global Admin Layout */
 .admin-page {
     min-height: 100vh;
@@ -50,26 +60,35 @@
     color: var(--admin-text-main);
     background: linear-gradient(135deg, var(--admin-primary) 0%, #818cf8 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
+/* Login Page Specifics */
 /* Login Page Specifics */
 .admin-login-wrapper {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    background: var(--admin-bg);
+    transition: background-color 0.3s ease;
 }
 
 .admin-login-card {
     background: var(--admin-surface);
     padding: 2.5rem;
-    border-radius: 1rem;
-    box-shadow: var(--admin-shadow-lg);
     width: 100%;
     max-width: 400px;
     border: 1px solid var(--admin-border);
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Dark mode specific shadow adjustment for login card */
+.dark-mode .admin-login-card {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 
 .admin-login-header {
@@ -81,6 +100,38 @@
     font-size: 3rem;
     margin-bottom: 1rem;
     display: inline-block;
+    color: var(--admin-primary);
+}
+
+.admin-login-card h2,
+.admin-login-card p {
+    color: var(--admin-text-main);
+}
+
+.admin-login-card p {
+    color: var(--admin-text-secondary) !important;
+}
+
+.admin-input {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text-main);
+}
+
+.admin-input:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.admin-error-message {
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    color: var(--admin-danger);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
 }
 
 /* Stats Grid */
@@ -353,4 +404,218 @@
         transform: scale(1);
         opacity: 1;
     }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+
+    .admin-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
+
+    .admin-header-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .admin-title {
+        font-size: 1.5rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1.25rem;
+    }
+
+    .chart-card {
+        padding: 1.25rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    /* Make list items stack or smaller */
+    .admin-list-item {
+        padding: 0.75rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .item-value {
+        align-self: flex-start;
+    }
+
+    .admin-modal-content {
+        padding: 1rem;
+        width: 95%;
+    }
+
+    /* Optimize table for mobile */
+    .admin-modal-body {
+        overflow-x: auto;
+    }
+}
+
+/* Professional Table Styles */
+.table-container {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--admin-border);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.admin-table th {
+    background: var(--admin-bg);
+    padding: 1rem;
+    font-weight: 600;
+    color: var(--admin-text-main);
+    border-bottom: 2px solid var(--admin-border);
+    white-space: nowrap;
+}
+
+.admin-table td {
+    padding: 1rem;
+    color: var(--admin-text-main);
+    border-bottom: 1px solid var(--admin-border);
+    vertical-align: top;
+}
+
+.admin-table-row:last-child td {
+    border-bottom: none;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.text-secondary {
+    color: var(--admin-text-secondary) !important;
+}
+
+/* Role Badges */
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.role-badge.admin {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.role-badge.teacher,
+.role-badge.scientist {
+    background: #f0fdf4;
+    /* Green tint */
+    color: #15803d;
+}
+
+.role-badge.student {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Dark Mode Badges */
+.dark-mode .role-badge.admin {
+    background: rgba(67, 56, 202, 0.2);
+    color: #a5b4fc;
+}
+
+.dark-mode .role-badge.teacher,
+.dark-mode .role-badge.scientist {
+    background: rgba(21, 128, 61, 0.2);
+    color: #86efac;
+}
+
+.dark-mode .role-badge.student {
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+}
+
+/* Reviews */
+.review-item {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.star-rating {
+    color: #fbbf24;
+    margin-right: 0.5rem;
+}
+
+.review-text {
+    color: var(--admin-text-secondary);
+    font-style: italic;
+}
+
+.no-reviews {
+    color: var(--admin-text-secondary);
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Modal Dark Mode Fixes */
+.admin-modal-content {
+    background: var(--admin-surface);
+    /* White in light, Dark Slate in dark */
+    color: var(--admin-text-main);
+}
+
+.admin-modal-header {
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-close-btn {
+    color: var(--admin-text-secondary);
+}
+
+.admin-close-btn:hover {
+    color: var(--admin-text-main);
+}
+
+/* Admin Theme Toggle */
+.admin-theme-btn {
+    background: transparent;
+    border: 1px solid var(--admin-border);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: var(--admin-text-main);
+    margin-right: 1rem;
+}
+
+.admin-theme-btn:hover {
+    background: var(--admin-bg);
+    transform: translateY(-1px);
 }

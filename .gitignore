@@ -64,3 +64,21 @@ yarn-error.log*
 brain/
 *.log
 antigravity/
+
+# Databases
+*.db
+*.sqlite3
+*.sqlite
+
+# Serialized data / Models
+*.pkl
+*.h5
+*.onnx
+*.pb
+*.ckpt
+
+# Backend specifics
+backend/models/
+backend/db/*.db
+backend/.env
+frontend/.env

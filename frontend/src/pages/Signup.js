@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import './Auth.css';
+
+
 export default function Signup() {
   const [formData, setFormData] = useState({ email: '', username: '', role: 'general_user', language: 'en', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
@@ -10,11 +12,14 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, message: '', requirements: [] });
   const navigate = useNavigate();
+
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+
   const validateUsername = (u) => /^[a-zA-Z0-9_]{3,20}$/.test(u);
+
   const checkPasswordStrength = (password) => {
     const requirements = [
       { test: password.length >= 8, message: 'At least 8 characters' },
@@ -26,13 +31,16 @@ export default function Signup() {
     ];
     const passedRequirements = requirements.filter(req => req.test);
     const score = (passedRequirements.length / requirements.length) * 100;
+
     let message = '';
     if (score === 100) message = 'Strong password';
     else if (score >= 66) message = 'Medium strength';
     else if (score >= 33) message = 'Weak password';
     else message = 'Very weak password';
+
     return { score, message, requirements };
   };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -41,6 +49,7 @@ export default function Signup() {
       setPasswordStrength(checkPasswordStrength(value));
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email && !formData.username) {
@@ -63,8 +72,10 @@ export default function Signup() {
       setError('Please meet all password requirements');
       return;
     }
+
     setLoading(true);
     setError('');
+
     try {
       await api.post('/signup', {
         email: formData.email || null,
@@ -73,6 +84,7 @@ export default function Signup() {
         language: formData.language,
         password: formData.password,
       });
+
       const successMessage = document.createElement('div');
       successMessage.className = 'success-message';
       successMessage.innerHTML = `
@@ -84,6 +96,7 @@ export default function Signup() {
         </div>
       `;
       document.body.appendChild(successMessage);
+
       setTimeout(() => {
         successMessage.remove();
         navigate('/login');
@@ -104,6 +117,7 @@ export default function Signup() {
       setLoading(false);
     }
   };
+
   return (
     <div className="auth-container">
       <div className="auth-card">

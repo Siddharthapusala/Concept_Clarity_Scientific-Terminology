@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import './Auth.css';
+
+
 export default function Profile({ onLogout, language, setLanguage, t }) {
   const [data, setData] = useState(null);
   const [review, setReview] = useState({ rating: 0, comment: '' });
@@ -23,7 +25,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
         setReview({ id: res.data.id, rating: res.data.rating, comment: res.data.comment || '' });
       }
     } catch (e) {
-      // It's okay if no review exists
+
     }
   };
 
@@ -33,10 +35,8 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
     try {
       await api.post('/review', { rating: review.rating, comment: review.comment });
       setReviewMessage('✅ Review Updated Successfully!');
-      // Re-fetch to ensure we have the ID and correct state
       await fetchReview();
 
-      // Clear message after 3 seconds
       setTimeout(() => setReviewMessage(''), 3000);
     } catch (e) {
       setReviewMessage('❌ Failed to submit review.');
@@ -64,6 +64,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
       setError(text.errorGeneric || 'Failed to load profile');
     }
   };
+
   useEffect(() => {
     const cached = sessionStorage.getItem('profileCache');
     if (cached) {
@@ -81,6 +82,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
     fetchMe();
     fetchReview();
   }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -101,6 +103,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
       setLoading(false);
     }
   };
+
   if (!data) {
     return (
       <div className="auth-card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
@@ -115,6 +118,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
       </div>
     );
   }
+
   return (
     <div className="auth-card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
       <div className="auth-header profile-header">
@@ -124,8 +128,6 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
         </div>
         <h2 className="auth-title">{text.profile || 'Profile'}</h2>
       </div>
-
-
 
       {!edit ? (
         <div className="auth-form">
@@ -300,7 +302,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
               {review.id && (
                 <button
                   className="nav-button logout-btn"
-                  onClick={() => { setEditingReview(false); fetchReview(); }} // Cancel edit and reset
+                  onClick={() => { setEditingReview(false); fetchReview(); }}
                   style={{ flex: 1 }}
                 >
                   Cancel
