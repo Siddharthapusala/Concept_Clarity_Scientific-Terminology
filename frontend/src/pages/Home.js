@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import './Home.css';
+import { translations } from '../utils/translations';
 
-
-export default function Home({ isAuthenticated, language, setLanguage, t }) {
+export default function Home({ isAuthenticated, language, setLanguage, t, recordAppTime }) {
   const text = t || {};
   const [searchTerm, setSearchTerm] = useState('');
   const [result, setResult] = useState('');
@@ -20,6 +20,8 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
     return v ? parseInt(v, 10) || 0 : 0;
   });
   const [resultLanguage, setResultLanguage] = useState(language);
+  const [translatedTerm, setTranslatedTerm] = useState('');
+  const resultText = translations[resultLanguage] || translations['en'];
   const [historyId, setHistoryId] = useState(null);
   const [feedback, setFeedback] = useState(0);
   const [videoId, setVideoId] = useState(null);
@@ -35,9 +37,19 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
 
+  const location = useLocation();
+
   useEffect(() => {
     setResultLanguage(language);
   }, [language]);
+
+  useEffect(() => {
+    if (location.state?.autoSearch) {
+      setSearchTerm(location.state.autoSearch);
+      handleSearch(null, location.state.autoSearch, resultLanguage);
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (searchTerm && result && !loading) {
@@ -93,7 +105,6 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
     setResult('');
     setLevels(null);
     setExamples([]);
-    setRelatedWords([]);
     setRelatedWords([]);
     setVideoId(null);
     setImageUrl(null);
@@ -154,6 +165,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
 
     if (!langOverride) {
       setResult('');
+      setTranslatedTerm('');
       setLevels(null);
       setExamples([]);
       setRelatedWords([]);
@@ -171,6 +183,8 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
       const def = res.data.definition || res.data.message;
 
       setResult(typeof def === 'string' ? def : '');
+      if (res.data.translated_term) setTranslatedTerm(res.data.translated_term);
+      else setTranslatedTerm(query);
       setLevels(null);
       if (res.data.history_id) setHistoryId(res.data.history_id);
       setFeedback(0);
@@ -202,6 +216,10 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
           if (mediaRes.data.image_url) setImageUrl(mediaRes.data.image_url);
         })
         .catch(err => console.error("Media fetch error:", err));
+
+      if (isAuthenticated && typeof recordAppTime === 'function') {
+        recordAppTime(120);
+      }
 
     } catch (err) {
       setError(text.errorGeneric || 'Failed to fetch definition. Please try again.');
@@ -267,8 +285,42 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
       synth.cancel();
       return;
     }
-    const utter = new SpeechSynthesisUtterance(result);
+
+    let textToSpeak = result;
+    try {
+      if (result.trim().startsWith('{')) {
+        const parsed = JSON.parse(result);
+        const parts = [];
+        if (translatedTerm) parts.push(translatedTerm);
+        if (parsed.key_concept) parts.push(parsed.key_concept);
+        if (parsed.definition) parts.push(parsed.definition);
+        if (parsed.explanation) {
+          if (Array.isArray(parsed.explanation)) {
+            parts.push(parsed.explanation.join('. '));
+          } else {
+            parts.push(parsed.explanation);
+          }
+        }
+        if (parsed.real_world_application) parts.push(parsed.real_world_application);
+        textToSpeak = parts.join('. ');
+      }
+    } catch (e) {
+    }
+
+    const utter = new SpeechSynthesisUtterance(textToSpeak);
     utter.lang = resultLanguage === 'hi' ? 'hi-IN' : resultLanguage === 'te' ? 'te-IN' : 'en-US';
+
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+      const targetVoice = voices.find(v => {
+        const vLang = v.lang.replace('_', '-').toLowerCase();
+        return vLang.startsWith(utter.lang.toLowerCase()) || vLang.startsWith(resultLanguage.toLowerCase());
+      });
+      if (targetVoice) {
+        utter.voice = targetVoice;
+      }
+    }
+
     synth.speak(utter);
   };
 
@@ -280,6 +332,17 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
     } catch (err) {
       console.error("Feedback failed", err);
     }
+  };
+
+  const handleWatchVideo = async () => {
+    if (isAuthenticated && historyId) {
+      try {
+        await api.post(`/history/${historyId}/video`);
+      } catch (err) {
+        console.error("Failed to track video watch", err);
+      }
+    }
+    setShowVideo(true);
   };
 
   return (
@@ -338,7 +401,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
                 </div>
 
                 {loading ? (
-                  <div className="drop-zone" style={{ border: 'none', background: 'white' }}>
+                  <div className="drop-zone loading-zone">
                     <div className="upload-prompt-row" style={{ flexDirection: 'column', gap: '2rem' }}>
                       <div className="lens-icon-wrapper" style={{ animation: 'pulse 1.5s infinite' }}>
                         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -470,11 +533,11 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
               <>
                 <div className="result-header">
                   <div className="result-header-top">
-                    <h2>{searchTerm}</h2>
+                    <h2>{translatedTerm || searchTerm}</h2>
                     {videoId && (
                       <button
                         className="video-toggle-btn"
-                        onClick={() => setShowVideo(true)}
+                        onClick={handleWatchVideo}
                         title="Watch Video"
                       >
                         📺 Watch Video
@@ -500,7 +563,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
                 <div className="result-content">
                   <div className="result-line definition-block">
                     <div className="line-header">
-                      <span className="label-title">{text.definition || 'Definition:'}</span>
+                      <span className="label-title">{resultText.definition || 'Definition:'}</span>
                       <button type="button" className="speaker-btn" title="Read Answer" onClick={speakAnswer}>
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -574,7 +637,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
                   {examples && examples.length > 0 && examples.some(ex => ex && ex.trim().length > 3) ? (
                     <div className="result-line example-block">
                       <div className="line-header">
-                        <span className="label-title">{text.examples || 'Examples:'}</span>
+                        <span className="label-title">{resultText.examples || 'Examples:'}</span>
                       </div>
                       <ul className="examples-list line-text">
                         {examples.filter(ex => ex && ex.trim().length > 3).map((ex, idx) => (
@@ -586,7 +649,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t }) {
                   {relatedWords && relatedWords.length > 0 && (
                     <div className="result-line related-block">
                       <div className="line-header">
-                        <span className="label-title">{text.relatedWords || 'Related Words:'}</span>
+                        <span className="label-title">{resultText.relatedWords || 'Related Words:'}</span>
                       </div>
                       <div className="related-words-container">
                         {relatedWords.map((word, idx) => (

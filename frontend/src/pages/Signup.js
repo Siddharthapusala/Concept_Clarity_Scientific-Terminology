@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import CustomSelect from '../components/CustomSelect';
 import './Auth.css';
 
 
@@ -161,37 +162,37 @@ export default function Signup() {
           </div>
           <div className="form-group">
             <label htmlFor="role" className="form-label">Role</label>
-            <select
-              id="role"
+            <CustomSelect
               name="role"
+              className="role-select"
               value={formData.role}
               onChange={handleChange}
-              className="form-input"
+              options={[
+                { value: 'student', label: 'Student' },
+                { value: 'teacher', label: 'Teacher' },
+                { value: 'scientist', label: 'Scientist' },
+                { value: 'journalist', label: 'Journalist' },
+                { value: 'engineer', label: 'Engineer' },
+                { value: 'healthcare_professional', label: 'Healthcare Professional' },
+                { value: 'general_user', label: 'General User' }
+              ]}
               disabled={loading}
-            >
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="scientist">Scientist</option>
-              <option value="journalist">Journalist</option>
-              <option value="engineer">Engineer</option>
-              <option value="healthcare_professional">Healthcare Professional</option>
-              <option value="general_user">General User</option>
-            </select>
+            />
           </div>
           <div className="form-group">
             <label htmlFor="language" className="form-label">Preferred Language</label>
-            <select
-              id="language"
+            <CustomSelect
               name="language"
+              className="language-select"
               value={formData.language}
               onChange={handleChange}
-              className="form-input"
+              options={[
+                { value: 'en', label: 'English' },
+                { value: 'te', label: 'Telugu' },
+                { value: 'hi', label: 'Hindi' }
+              ]}
               disabled={loading}
-            >
-              <option value="en">English</option>
-              <option value="te">Telugu</option>
-              <option value="hi">Hindi</option>
-            </select>
+            />
           </div>
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>

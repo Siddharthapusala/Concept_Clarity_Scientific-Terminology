@@ -91,3 +91,23 @@ class AppReviewOut(BaseModel):
     created_at: datetime
     class Config:
         orm_mode = True
+
+class QuizResultCreate(BaseModel):
+    score: int
+    total_questions: int
+    difficulty: str
+    topic: Optional[str] = None
+    time_taken: Optional[int] = 0
+
+class QuizResultOut(BaseModel):
+    id: int
+    user_id: int
+    username: Optional[str] = None # Added via join
+    score: int
+    total_questions: int
+    difficulty: str
+    topic: Optional[str] = None
+    time_taken: Optional[int] = 0
+    created_at: datetime
+    class Config:
+        orm_mode = True

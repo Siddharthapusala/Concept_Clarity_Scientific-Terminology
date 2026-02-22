@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Profile from './pages/Profile';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import QuizPage from './pages/QuizPage';
 import Navbar from './components/Navbar';
 import './App.css';
 import { translations } from './utils/translations';
@@ -59,6 +60,31 @@ function App() {
     localStorage.setItem('language', lang);
   };
 
+  const recordAppTime = async (seconds) => {
+    if (!isAuthenticated) return;
+    try {
+      const token = localStorage.getItem('token');
+      await api.post('/record-time', { time_spent: seconds }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error('Error recording time:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const token = localStorage.getItem('token');
+    const interval = setInterval(() => {
+      api.post('/record-time', { time_spent: 60 }, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(err => console.error(err));
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const handleLogin = async () => {
     return await fetchUserProfile();
   };
@@ -87,7 +113,19 @@ function App() {
                   language={language}
                   setLanguage={handleLanguageChange}
                   t={t}
+                  recordAppTime={recordAppTime}
                 />
+              }
+            />
+            <Route
+              path="/quiz"
+              element={
+                isAuthenticated ?
+                  <QuizPage
+                    isDarkMode={isDarkMode}
+                    language={language}
+                  /> :
+                  <Navigate to="/login" replace />
               }
             />
             <Route

@@ -138,11 +138,12 @@ class FastLLMService:
 
             prompt = (
                 f"Explain '{query}' at three levels in {language} ({lang_instruction}). Return STRICT JSON only. "
-                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words'). "
+                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term'). "
                 f"Values MUST be in {language} script. "
                 f"\nRequirements:\n{line_constraint}\n"
                 f"Format: "
                 f"{{"
+                f"  \"translated_term\": \"[The translation of '{query}' in {language}]\", "
                 f"  \"easy\": \"[Explanation in {language}]\", "
                 f"  \"medium\": \"[Explanation in {language}]\", "
                 f"  \"hard\": \"[Explanation in {language}]\", "
@@ -172,7 +173,7 @@ class FastLLMService:
                 model=self.text_model,
                 response_format={"type": "json_object"},
                 temperature=0.3,
-                max_tokens=1500
+                max_tokens=4000
             )
             response_content = completion.choices[0].message.content
             
@@ -219,6 +220,7 @@ class FastLLMService:
                     image_url = self.get_google_image(query)
 
             result = {
+                "translated_term": data.get("translated_term", query),
                 "easy": data.get("easy", easy_def),
                 "medium": data.get("medium", easy_def),
                 "hard": data.get("hard", easy_def),
@@ -232,7 +234,9 @@ class FastLLMService:
             }
             return result
         except Exception as e:
+            import traceback
             print(f"❌ Groq Text Error: {e}")
+            print(traceback.format_exc())
             return self._get_fallback_explanation(query, start_time, language)
 
     def get_media_only(self, query: str) -> dict:
@@ -380,6 +384,92 @@ class FastLLMService:
                 "definition": "Unable to analyze image at this time.",
                 "source": "error",
                 "confidence": "low"
+            }
+
+    def generate_quiz(self, terms: list, level: str = "medium", language: str = "English", num_questions: int = 5) -> dict:
+        """Generate a quiz based on provided terms and difficulty level."""
+        start_time = time.time()
+        try:
+            lang_instruction = ""
+            if language.lower() == "telugu":
+                lang_instruction = "IMPORTANT: Provide the questions and answers in Telugu script (తెలుగు). Do not use English transliteration."
+            elif language.lower() == "hindi":
+                lang_instruction = "IMPORTANT: Provide the questions and answers in Hindi script (देवनागरी). Do not use English transliteration."
+
+            level_instruction = ""
+            if level.lower() == "easy":
+                level_instruction = "Questions should be simple, foundational, and easy to answer. Suitable for school students."
+            elif level.lower() == "medium":
+                level_instruction = "Questions should be moderately difficult, testing conceptual understanding."
+            elif level.lower() == "hard":
+                level_instruction = "Questions should be advanced, tricky, application-based, and meant for a deep understanding."
+
+            terms_str = ", ".join(terms) if terms else "General Science, Physics, Biology"
+
+            prompt = (
+                f"Generate a {num_questions}-question multiple choice quiz about the following topics: {terms_str}. "
+                f"Ensure the questions are highly varied, random, and different from typical standard questions to prevent repetition across multiple runs. "
+                f"The target language is {language}. {lang_instruction} "
+                f"Difficulty level: {level}. {level_instruction} "
+                f"Return STRICT JSON only. "
+                f"JSON Keys MUST be in English. The content of questions, options, answer, and explanation MUST be in {language} script. "
+                f"Format EXACTLY like this:\n"
+                f"{{\n"
+                f"  \"questions\": [\n"
+                f"    {{\n"
+                f"      \"question\": \"[Question text here]\",\n"
+                f"      \"options\": [\"[Option A]\", \"[Option B]\", \"[Option C]\", \"[Option D]\"],\n"
+                f"      \"answer\": \"[The exact text of the correct option from the options listed]\",\n"
+                f"      \"explanation\": \"[A brief 1-2 sentence explanation of why this answer is correct]\",\n"
+                f"      \"topic\": \"[A 1-2 word specific subtopic this question relates to (e.g., 'Thermodynamics', 'Genetics')]\"\n"
+                f"    }}\n"
+                f"  ]\n"
+                f"}}"
+            )
+
+            system_prompt = (
+                f"You are an expert science teacher creating a quiz in {language}. "
+                f"You must strictly output valid JSON containing exactly {num_questions} questions."
+            )
+
+            completion = self.client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                model=self.text_model,
+                response_format={"type": "json_object"},
+                temperature=0.6,
+                max_tokens=2000 if num_questions <= 10 else 4000
+            )
+
+            response_content = completion.choices[0].message.content
+            
+            # Robust JSON extraction
+            try:
+                start_idx = response_content.find('{')
+                end_idx = response_content.rfind('}')
+                if start_idx != -1 and end_idx != -1:
+                    response_content = response_content[start_idx:end_idx+1]
+                data = json.loads(response_content)
+                if "questions" not in data or not isinstance(data["questions"], list):
+                    raise ValueError("JSON missing 'questions' array")
+            except Exception as e:
+                print(f"❌ JSON Decode Error for Quiz. Raw content: {response_content[:100]}...")
+                raise Exception("Invalid JSON received from LLM for Quiz")
+
+            return {
+                "quiz": data["questions"],
+                "source": "groq",
+                "time_ms": int((time.time() - start_time) * 1000)
+            }
+
+        except Exception as e:
+            print(f"❌ Groq Quiz Generation Error: {e}")
+            return {
+                "quiz": [],
+                "error": "Failed to generate quiz. Please try again.",
+                "source": "error"
             }
 
 llm_service = FastLLMService()

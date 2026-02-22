@@ -45,12 +45,12 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         return {"message": "User created successfully"}
 
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
         raise HTTPException(400, "User already exists or invalid data")
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
         db.rollback()
-        raise HTTPException(500, "Database error")
+        raise HTTPException(500, f"Database error: {str(e)}")
     except Exception as e:
         db.rollback()
         raise HTTPException(500, f"Signup failed: {str(e)}")
@@ -208,3 +208,29 @@ def get_review(
         raise HTTPException(404, "No review found")
         
     return review
+
+from pydantic import BaseModel
+class TimeUpdate(BaseModel):
+    time_spent: int
+
+@router.post("/record-time")
+def record_time(
+    data: TimeUpdate,
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db)
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Missing or invalid authorization header")
+    
+    token = authorization.split(" ", 1)[1]
+    sub = decode_token(token)
+    if not sub:
+        raise HTTPException(401, "Invalid token")
+        
+    user = db.query(User).filter((User.email == sub) | (User.username == sub)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+        
+    user.time_spent = (user.time_spent or 0) + data.time_spent
+    db.commit()
+    return {"status": "success"}

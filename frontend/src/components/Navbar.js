@@ -58,6 +58,13 @@ export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTh
               </button>
               {isAuthenticated ? (
                 <>
+                  <Link
+                    to="/quiz"
+                    className={`nav-link quiz-link ${currentPath === '/quiz' ? 'active' : ''}`}
+                    title="Play Quiz"
+                  >
+                    🎮 Quiz
+                  </Link>
                   <div className="profile-widget">
                     <button
                       className="history-icon-btn"

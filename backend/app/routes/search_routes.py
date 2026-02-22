@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..utils.fast_llm_service import llm_service
 from ..database import SessionLocal
-from ..models import User, SearchHistory
+from ..models import User, SearchHistory, QuizResult
 from ..auth import decode_token
-from ..schemas import SearchHistoryOut, FeedbackUpdate
+from ..schemas import SearchHistoryOut, FeedbackUpdate, QuizResultCreate, QuizResultOut
 import json
 
 
@@ -21,13 +21,29 @@ def get_db():
 
 
 def get_current_user_optional(authorization: Optional[str] = Header(default=None), db: Session = Depends(get_db)):
+    print(f"[DEBUG] get_current_user_optional called with auth header: {authorization[:20] if authorization else None}...")
     if not authorization or not authorization.startswith("Bearer "):
+        print("[DEBUG] No auth header or does not start with Bearer")
         return None
     token = authorization.split(" ", 1)[1]
-    sub = decode_token(token)
-    if not sub:
+    
+    from ..auth import decode_token # ensure it's imported
+    
+    try:
+        sub = decode_token(token)
+    except Exception as e:
+        print(f"[DEBUG] Token decode failed: {e}")
         return None
+        
+    if not sub:
+        print("[DEBUG] Decoded token gave no sub")
+        return None
+        
     user = db.query(User).filter((User.email == sub) | (User.username == sub)).first()
+    if not user:
+        print(f"[DEBUG] User not found for sub: {sub}")
+    else:
+        print(f"[DEBUG] User found: {user.username}")
     return user
 
 
@@ -70,6 +86,7 @@ def search_term(
             definition = llm_explanation.get("easy") if isinstance(llm_explanation, dict) else llm_explanation
             result_data = {
                 "term": q,
+                "translated_term": llm_explanation.get("translated_term", q) if isinstance(llm_explanation, dict) else q,
                 "definition": definition,
                 "definition_levels": llm_explanation if isinstance(llm_explanation, dict) else {"easy": definition, "medium": definition, "hard": definition},
                 "examples": llm_explanation.get("examples", []) if isinstance(llm_explanation, dict) else [],
@@ -87,7 +104,10 @@ def search_term(
             history_entry = SearchHistory(
                 user_id=user.id,
                 query=q,
-                result=summary_result
+                result=summary_result,
+                search_level=level if level else "easy",
+                search_language=language if language else "en",
+                search_source="text"
             )
             db.add(history_entry)
             db.commit()
@@ -163,6 +183,21 @@ def update_feedback(
     return {"status": "ok", "feedback": item.feedback}
 
 
+@router.post("/history/{history_id}/video")
+def track_video_watched(
+    history_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    item = db.query(SearchHistory).filter(SearchHistory.id == history_id, SearchHistory.user_id == user.id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="History item not found")
+
+    item.video_watched = True
+    db.commit()
+    return {"status": "ok", "video_watched": True}
+
+
 @router.post("/analyze_image")
 async def analyze_image(
     file: UploadFile = File(...),
@@ -183,7 +218,10 @@ async def analyze_image(
              history_entry = SearchHistory(
                 user_id=user.id,
                 query=f"[Image] {result.get('term')}",
-                result=result.get("definition")
+                result=result.get("definition"),
+                search_level=level if level else "easy",
+                search_language=language if language else "en",
+                search_source="image"
             )
              db.add(history_entry)
              db.commit()
@@ -193,3 +231,140 @@ async def analyze_image(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/quiz")
+def get_user_quiz(
+    language: str = Query("English", pattern="^(English|Telugu|Hindi|en|te|hi)$"),
+    level: str = Query("medium", pattern="^(easy|medium|hard)$"),
+    topic: Optional[str] = Query(None, description="Specific topic to generate quiz for"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        lang_map = {"en": "English", "te": "Telugu", "hi": "Hindi"}
+        language = lang_map.get(language, language)
+
+        unique_terms = []
+
+        # If a specific topic is requested, use only that topic
+        if topic and topic.strip():
+            unique_terms = [topic.strip()]
+        else:
+            # Otherwise, get recent search terms for the user
+            history = db.query(SearchHistory).filter(
+                SearchHistory.user_id == user.id,
+                SearchHistory.query.notlike("[%]%") # Ignore image/voice prefixes if they exist
+            ).order_by(SearchHistory.created_at.desc()).limit(20).all()
+
+            # Extract unique terms
+            terms_set = set()
+            for h in history:
+                term = h.query.strip().lower()
+                if term and term not in terms_set:
+                    terms_set.add(term)
+                    unique_terms.append(h.query)
+                if len(unique_terms) >= 5: # Take up to 5 unique terms
+                    break
+
+            if not unique_terms:
+                unique_terms = ["Photosynthesis", "Gravity", "DNA", "Solar System", "Atoms", "Force", "Energy", "Elements"] # Basic fallback
+
+        if level == "easy":
+            num_q = 5
+        elif level == "medium":
+            num_q = 10
+        else: # hard
+            num_q = 20
+
+        quiz_data = llm_service.generate_quiz(unique_terms, level, language, num_questions=num_q)
+        
+        if quiz_data.get("error"):
+            raise HTTPException(status_code=500, detail=quiz_data["error"])
+
+        return {
+            "status": "success",
+            "terms_used": unique_terms,
+            "quiz": quiz_data["quiz"]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Quiz Endpoint Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate quiz. Server context error.")
+
+
+@router.post("/quiz/results", response_model=QuizResultOut)
+def save_quiz_result(
+    result: QuizResultCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        new_result = QuizResult(
+            user_id=user.id,
+            score=result.score,
+            total_questions=result.total_questions,
+            difficulty=result.difficulty,
+            topic=result.topic,
+            time_taken=result.time_taken
+        )
+        db.add(new_result)
+        db.commit()
+        db.refresh(new_result)
+        
+        # Build the return object mapping the username
+        return QuizResultOut(
+            id=new_result.id,
+            user_id=new_result.user_id,
+            username=user.username or user.first_name or "Anonymous Researcher",
+            score=new_result.score,
+            total_questions=new_result.total_questions,
+            difficulty=new_result.difficulty,
+            topic=new_result.topic,
+            time_taken=new_result.time_taken,
+            created_at=new_result.created_at
+        )
+    except Exception as e:
+        print(f"Error saving quiz result: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save quiz score")
+
+
+@router.get("/quiz/leaderboard", response_model=List[QuizResultOut])
+def get_quiz_leaderboard(
+    difficulty: Optional[str] = Query(None, description="Filter leaderboard by difficulty"),
+    limit: int = Query(10, description="Number of top scores to return"),
+    db: Session = Depends(get_db)
+):
+    try:
+        query = db.query(QuizResult, User).join(User, QuizResult.user_id == User.id)
+        
+        if difficulty:
+            query = query.filter(QuizResult.difficulty == difficulty)
+            
+        # Order by highest score percentage, then by most total questions, then by most recent
+        # We calculate percentage as score * 1.0 / total_questions in the order_by
+        results = query.order_by(
+            (QuizResult.score * 1.0 / QuizResult.total_questions).desc(),
+            QuizResult.total_questions.desc(),
+            QuizResult.created_at.desc()
+        ).limit(limit).all()
+        
+        leaderboard = []
+        for qr, user in results:
+            leaderboard.append(QuizResultOut(
+                id=qr.id,
+                user_id=qr.user_id,
+                username=user.username or user.first_name or "Anonymous Researcher",
+                score=qr.score,
+                total_questions=qr.total_questions,
+                difficulty=qr.difficulty,
+                topic=qr.topic,
+                time_taken=qr.time_taken,
+                created_at=qr.created_at
+            ))
+            
+        return leaderboard
+    except Exception as e:
+        print(f"Error fetching leaderboard: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch leaderboard")

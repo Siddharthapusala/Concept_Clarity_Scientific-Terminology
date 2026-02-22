@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
 from .database import Base
 from datetime import datetime
 
@@ -15,6 +15,7 @@ class User(Base):
     language = Column(String(10), default="en")
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    time_spent = Column(Integer, default=0)
 
 
 class Term(Base):
@@ -34,6 +35,10 @@ class SearchHistory(Base):
     result = Column(Text, nullable=False)
     feedback = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    search_level = Column(String(20), nullable=True)
+    search_language = Column(String(10), default="en")
+    search_source = Column(String(20), default="text")
+    video_watched = Column(Boolean, default=False)
 
 
 class AppReview(Base):
@@ -43,4 +48,17 @@ class AppReview(Base):
     user_id = Column(Integer, index=True)
     rating = Column(Integer, nullable=False)
     comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class QuizResult(Base):
+    __tablename__ = "quiz_results"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, index=True, nullable=False)
+    score = Column(Integer, nullable=False)
+    total_questions = Column(Integer, nullable=False)
+    difficulty = Column(String(20), nullable=False)
+    topic = Column(String(255), nullable=True)
+    time_taken = Column(Integer, default=0) # New field in seconds
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import CustomSelect from '../components/CustomSelect';
 import './Auth.css';
 
 
@@ -199,18 +200,18 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
           </div>
           <div className="form-group">
             <label htmlFor="language" className="form-label">{text.language || 'Language'}</label>
-            <select
-              id="language"
+            <CustomSelect
               name="language"
+              className="language-select"
               value={form.language}
               onChange={(e) => setForm({ ...form, language: e.target.value })}
-              className="form-input"
+              options={[
+                { value: 'en', label: 'English' },
+                { value: 'te', label: 'Telugu' },
+                { value: 'hi', label: 'Hindi' }
+              ]}
               disabled={loading}
-            >
-              <option value="en">English</option>
-              <option value="te">Telugu</option>
-              <option value="hi">Hindi</option>
-            </select>
+            />
           </div>
           <div className="form-actions">
             <button type="submit" disabled={loading} className="auth-button save-btn">
@@ -255,7 +256,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
 
         {!review.id || editingReview ? (
           <>
-            <div className="star-rating-container">
+            <div className="review-card">
               <div className="star-rating">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -312,7 +313,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
             {reviewMessage && <p style={{ marginTop: '1rem', color: reviewMessage.includes('Success') ? 'green' : 'red' }}>{reviewMessage}</p>}
           </>
         ) : (
-          <div className="review-display" style={{ background: 'rgba(255,255,255,0.5)', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <div className="review-card">
             <div className="star-rating" style={{ pointerEvents: 'none' }}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <span
@@ -325,7 +326,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
               ))}
             </div>
             {review.comment && (
-              <p style={{ marginTop: '1rem', fontStyle: 'italic', color: '#4a5568', textAlign: 'center' }}>
+              <p className="review-display-comment">
                 "{review.comment}"
               </p>
             )}

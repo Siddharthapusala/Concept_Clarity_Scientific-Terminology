@@ -245,3 +245,40 @@
     gap: 0.3rem;
   }
 }
+
+.quiz-link {
+  font-weight: 600;
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  margin-right: 0.5rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.quiz-link:hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.dark .quiz-link {
+  color: #60a5fa !important;
+  background: rgba(96, 165, 250, 0.1);
+}
+
+.dark .quiz-link:hover {
+  background: rgba(96, 165, 250, 0.2);
+}
+
+.quiz-link.active {
+  background: #3b82f6;
+  color: white !important;
+}
+
+.dark .quiz-link.active {
+  background: #3b82f6;
+  color: white !important;
+}

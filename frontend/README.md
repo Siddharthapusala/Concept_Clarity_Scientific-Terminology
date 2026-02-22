@@ -1,139 +1,71 @@
-# ConceptClarity Frontend - Traditional React Setup
+# ConceptClarity Frontend - Premium React Experience
 
-This project has been migrated from Vite to Create React App (traditional React setup).
+ConceptClarity is a modern, responsive React application designed for high-performance scientific learning. It features a gamified experience, advanced data visualization, and a state-of-the-art UI/UX.
 
-## 🚀 Getting Started
+## 🚀 Key Modules
 
-### Prerequisites
-- Node.js (version 14 or higher)
-- npm or yarn package manager
-
-### Installation
-
-1. Navigate to the frontend directory:
-```bash
-cd frontend
-```
-2. Install dependencies:
-```bash
-npm install
-```
-3. Start the development server:
-```bash
-npm start
-```
-The application will open in your browser at `http://localhost:3000`.
+-   **Search Engine**: Adaptive complexity levels (Easy/Medium/Hard) and multilingual support (EN/HI/TE).
+-   **Image Analysis (Lens)**: Advanced image upload and drag-and-drop analysis with a premium modal interface.
+-   **Quiz System**: Dynamic, time-based quizzes with a real-time podium leaderboard.
+-   **Admin Suite**: Interactive analytics dashboard with Chart.js integration and data export capabilities.
+-   **User Profile**: Comprehensive profile management including application feedback and search history.
 
 ## 📁 Project Structure
 
 ```
 frontend/
-├── public/
-│   ├── index.html          # Main HTML template
-│   └── manifest.json       # PWA manifest
+├── public/                # Static assets (Favicons, manifest, etc.)
 ├── src/
-│   ├── components/         # Reusable components
-│   │   └── Navbar.js       # Navigation component
-│   ├── pages/             # Page components
-│   │   ├── Login.js       # Login page
-│   │   ├── Signup.js      # Signup page
-│   │   └── Home.js        # Home page (search functionality)
-│   ├── services/          # API services
-│   │   └── api.js         # Axios configuration
-│   ├── App.js             # Main application component
-│   ├── App.css            # Global styles
-│   └── index.js           # Application entry point
-├── package.json           # Dependencies and scripts
-└── README.md             # This file
+│   ├── components/        # Reusable UI components
+│   │   ├── CustomSelect.js # Premium generalized dropdown component
+│   │   ├── Navbar.js      # Consolidated navigation with unified styles
+│   │   └── HistoryModal.js # Interactive search history portal
+│   ├── pages/            # Page components
+│   │   ├── Home.js        # Search & Lens entry point
+│   │   ├── QuizPage.js    # Gamified quiz & leaderboard
+│   │   ├── AdminDashboard.js # Analytics & metadata management
+│   │   ├── Profile.js     # User preferences & history
+│   │   ├── Login.js       # Re-designed auth experience
+│   │   └── Signup.js      # Robust user registration
+│   ├── services/         # API & networking
+│   │   └── api.js         # Centralized Axios with authentication
+│   ├── utils/            # Shared utilities
+│   │   └── translations.js # Multilingual dictionary system
+│   ├── App.js            # Main routing & global state
+│   └── App.css           # Core layout & global overrides
+├── package.json          # Dependencies (Chart.js, Axios, XLSX)
+└── README.md             # Technical documentation
 ```
 
-## 🛠 Available Scripts
+## 🎨 Professional Styling System
 
-- `npm start` - Runs the app in development mode
-- `npm test` - Launches the test runner
-- `npm run build` - Builds the app for production
-- `npm run eject` - Ejects from Create React App (irreversible)
+-   **Glassmorphism**: Modern backdrop filters and subtle transparency for a premium feel.
+-   **Themed Layouts**: Unified CSS variables in `App.css` and `Auth.css` for consistent branding.
+-   **Responsive Design**: Mobile-optimized components using media queries for all devices.
+-   **Consolidated CSS**: Specialized stylesheets for Home, Quiz, and Admin pages to maintain clarity.
 
-## 🔧 Configuration
+## 🛠️ Requirements & Installation
 
-### API Configuration
-The application is configured to connect to the backend at `http://localhost:8000`. This is set in:
-- `src/services/api.js` - Axios base URL configuration
-- `package.json` - Proxy configuration for development
+1. Navigate to `frontend/`: `cd frontend`
+2. Install dependencies: `npm install`
+3. Run development: `npm start` (Runs on `localhost:3000`)
+4. Build for production: `npm run build`
 
-### Environment Variables
-Create a `.env` file in the frontend root for environment-specific variables:
-```
-REACT_APP_API_URL=http://localhost:8000
-```
+## 📊 Analytics & Reporting
 
-## 🔗 Backend Integration
+The **Admin Dashboard** utilizes `Chart.js` for real-time visualization of:
+-   **Search Complexity Distribution**
+-   **Multilingual Adoption**
+-   **Device/Source Analytics**
+-   **User Engagement Metrics**
 
-Make sure the backend server is running on port 8000:
-```bash
-cd backend
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+Reports can be exported as **Excel** or **CSV** directly from the dashboard for professional reporting.
 
-Or use the provided batch file:
-```bash
-cd backend
-run.bat
-```
+## 🔐 Security
 
-## 🎨 Styling
-
-- Global styles are in `src/App.css`
-- Component-specific styles are in their respective CSS files
-- Authentication styles are in `src/pages/Auth.css`
-- Home page styles are in `src/pages/Home.css`
-- Navbar styles are in `src/components/Navbar.css`
-
-## 🔐 Authentication
-
-The app uses JWT tokens for authentication:
-- Tokens are stored in localStorage
-- Protected routes redirect to login if not authenticated
-- Automatic token validation on app load
-
-## 🚀 Deployment
-
-### Build for Production
-```bash
-npm run build
-```
-
-This creates a `build` folder with optimized production files.
-
-### Deployment Options
-- **Static Hosting**: Netlify, Vercel, GitHub Pages
-- **CDN**: AWS CloudFront, Cloudflare
-- **Traditional Server**: Apache, Nginx
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-1. **Port Already in Use**
-   - Kill processes using port 3000: `npx kill-port 3000`
-   - Or change the port: `PORT=3001 npm start`
-
-2. **Module Not Found**
-   - Delete `node_modules` and `package-lock.json`
-   - Run `npm install` again
-
-3. **API Connection Issues**
-   - Ensure backend is running on port 8000
-   - Check CORS configuration in backend
-   - Verify network connectivity
-
-## 📞 Support
-
-For issues related to:
-- **Frontend**: Check this README and React documentation
-- **Backend**: Refer to backend documentation
-- **Database**: Check PostgreSQL and Neon documentation
+-   **JWT-Based Auth**: Secure token-based session management stored in `localStorage`.
+-   **Protected Routes**: Automated redirection for unauthenticated users across Quiz and Profile pages.
+-   **Credential Safety**: Robust password strength validation in the Signup workflow.
 
 ---
-
-**Note**: This project uses Create React App 5.0.1, which provides a solid foundation for React applications with built-in webpack, Babel, and development tools.
+**Note**: This frontend is built with **Create React App (CRA) 5.0.1**, ensuring a standardized, reliable build pipeline and optimized production bundles.
