@@ -18,8 +18,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://concept-clarity-scientific-terminology.onrender.com",
-        "https://concept-clarity-scientific-terminology-1.onrender.com"
+        "https://concept-clarity-scientific-terminology-17an.onrender.com",
+        "https://concept-clarity-scientific-terminology-1-vwip.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
