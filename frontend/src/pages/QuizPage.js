@@ -204,7 +204,7 @@ export default function QuizPage({ isDarkMode, language }) {
 
         return (
             <div className="quiz-leaderboard-section">
-                <h3>🏆 Top 10 {titlePrefix} Commanders</h3>
+                <h3 className="leaderboard-title">🏆 Leaderboard</h3>
                 {loadingLeaderboard ? (
                     <p style={{ color: '#64748b' }}>Pulling ranks...</p>
                 ) : leaderboard.length > 0 ? (

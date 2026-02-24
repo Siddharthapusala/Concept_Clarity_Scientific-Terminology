@@ -317,7 +317,7 @@ def get_stats(
             (QuizResult.score * 1.0 / QuizResult.total_questions).desc(),
             QuizResult.total_questions.desc(),
             QuizResult.created_at.desc()
-        ).limit(10).all()
+        ).limit(100).all() 
 
     top_quizzers = []
     seen_users = set()
@@ -325,10 +325,13 @@ def get_stats(
         if u.id not in seen_users:
             seen_users.add(u.id)
             top_quizzers.append({
+                "user_id": u.id,
                 "username": u.username or u.first_name or "Anonymous",
                 "score": f"{qr.score}/{qr.total_questions}",
                 "percentage": round((qr.score / qr.total_questions) * 100) if qr.total_questions > 0 else 0
             })
+            if len(top_quizzers) >= 10:
+                break
 
     return {
         "total_members": total_members,
@@ -389,10 +392,7 @@ def get_users(authorization: str = Header(None), db: Session = Depends(get_db)):
     ).group_by(SearchHistory.user_id).all()
     videos_map = {row[0]: row[1] for row in videos_watched_rows}
 
-    # Bulk fetch search history (limit 5 per user is tricky in SQL, so we'll fetch all and slice or just fetch the count)
-    # Given the user wants it fast, let's just fetch the last 5 for EACH user in a single query if possible, 
-    # but a simple way is to fetch everything and filter, or just keep it as is if search history isn't too large.
-    # Actually, let's just fetch the search history for these users and limit in memory.
+
     search_history_rows = db.query(SearchHistory).filter(
         SearchHistory.user_id.in_(user_ids)
     ).order_by(SearchHistory.user_id, SearchHistory.created_at.desc()).all()
@@ -419,7 +419,7 @@ def get_users(authorization: str = Header(None), db: Session = Depends(get_db)):
 
         user_data.append({
             "id": user.id,
-            "username": user.username,
+            "username": user.username or user.first_name or "Anonymous",
             "email": user.email,
             "role": user.role,
             "time_spent": user.time_spent or 0,

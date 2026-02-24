@@ -367,9 +367,9 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
         } else if (viewMode === 'quiz') {
             list = list.filter(u => u.has_played_quiz || (u.avg_quiz_score !== null && u.avg_quiz_score !== undefined && u.avg_quiz_score !== 'N/A'));
         } else if (viewMode === 'top10') {
-            list = list.filter(u => stats?.top_quizzers?.some(tq => tq.username === u.username)).sort((a, b) => {
-                const indexA = stats.top_quizzers.findIndex(tq => tq.username === a.username);
-                const indexB = stats.top_quizzers.findIndex(tq => tq.username === b.username);
+            list = list.filter(u => stats?.top_quizzers?.some(tq => (tq.user_id === u.id) || (tq.username === u.username))).sort((a, b) => {
+                const indexA = stats.top_quizzers.findIndex(tq => (tq.user_id === a.id) || (tq.username === a.username));
+                const indexB = stats.top_quizzers.findIndex(tq => (tq.user_id === b.id) || (tq.username === b.username));
                 return indexA - indexB;
             });
         }
@@ -637,7 +637,9 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                     </div>
                                     <div className="podium-name">{stats.top_quizzers[1].username}</div>
                                     <div className="podium-score">{stats.top_quizzers[1].percentage}%</div>
-                                    <div className="podium-bar silver-bar" style={{ height: '100px' }}>2</div>
+                                    <div className="podium-bar silver-bar" style={{ height: '100px' }}>
+                                        <span className="podium-rank">2</span>
+                                    </div>
                                 </div>
                             )}
 
@@ -648,7 +650,9 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                 </div>
                                 <div className="podium-name">{stats.top_quizzers[0].username}</div>
                                 <div className="podium-score">{stats.top_quizzers[0].percentage}%</div>
-                                <div className="podium-bar gold-bar" style={{ height: '140px' }}>1</div>
+                                <div className="podium-bar gold-bar" style={{ height: '140px' }}>
+                                    <span className="podium-rank">1</span>
+                                </div>
                             </div>
 
                             {stats.top_quizzers.length > 2 && (
@@ -658,7 +662,9 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                     </div>
                                     <div className="podium-name">{stats.top_quizzers[2].username}</div>
                                     <div className="podium-score">{stats.top_quizzers[2].percentage}%</div>
-                                    <div className="podium-bar bronze-bar" style={{ height: '80px' }}>3</div>
+                                    <div className="podium-bar bronze-bar" style={{ height: '80px' }}>
+                                        <span className="podium-rank">3</span>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -667,7 +673,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                             <div className="leaderboard-list-container" style={{ textAlign: 'center', marginTop: '1.5rem' }}>
                                 <button
                                     className="admin-btn-primary"
-                                    onClick={() => fetchUsers('top10')}
+                                    onClick={() => fetchUsers('top10', true, true)}
                                     style={{ width: 'auto', padding: '0.75rem 2rem', borderRadius: '50px' }}
                                 >
                                     View Top 10 Quiz Players
@@ -815,7 +821,18 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={filteredLangs} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                                    <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(val) => val ? val.charAt(0).toUpperCase() + val.slice(1) : ''} />
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        stroke="#9ca3af"
+                                                        tick={{ fill: '#6b7280', fontSize: 13, fontWeight: 500 }}
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        interval={0}
+                                                        angle={0}
+                                                        textAnchor="middle"
+                                                        height={40}
+                                                        tickFormatter={(val) => val ? val.charAt(0).toUpperCase() + val.slice(1) : ''}
+                                                    />
                                                     <YAxis allowDecimals={false} stroke="#9ca3af" tick={{ fill: '#6b7280' }} axisLine={false} tickLine={false} />
                                                     <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} labelFormatter={(label) => label ? label.charAt(0).toUpperCase() + label.slice(1) : ''} />
                                                     <Bar dataKey="value" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={isMobile ? 25 : 40}>
@@ -899,7 +916,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart
                                                     data={[...users].sort((a, b) => (b.time_spent || 0) - (a.time_spent || 0)).slice(0, 5).map(u => ({ ...u, time_spent_mins: Math.floor((u.time_spent || 0) / 60) }))}
-                                                    margin={{ top: 20, right: 30, left: 20, bottom: isMobile ? 10 : 25 }}
+                                                    margin={{ top: 20, right: 30, left: 20, bottom: isMobile ? 40 : 60 }}
                                                 >
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                                     <XAxis
@@ -909,6 +926,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                         tickLine={false}
                                                         axisLine={false}
                                                         interval={0}
+                                                        height={40}
                                                     />
                                                     <YAxis
                                                         allowDecimals={false}
@@ -944,15 +962,17 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                     <div style={{ height: '300px', width: '100%' }}>
                                         {stats.daily_searches && stats.daily_searches.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={stats.daily_searches} margin={{ top: 20, right: 30, left: 20, bottom: isMobile ? 10 : 5 }}>
+                                                <BarChart data={stats.daily_searches} margin={{ top: 20, right: 30, left: 20, bottom: isMobile ? 40 : 60 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                                     <XAxis
                                                         dataKey="date"
                                                         stroke="#9ca3af"
-                                                        tick={!isMobile ? { fill: '#6b7280', fontSize: 11, fontWeight: 500 } : false}
+                                                        tick={!isMobile ? { fill: '#6b7280', fontSize: 9, fontWeight: 600 } : false}
                                                         tickLine={false}
                                                         axisLine={false}
-                                                        minTickGap={20}
+                                                        minTickGap={2}
+                                                        interval={0}
+                                                        height={40}
                                                         tickFormatter={(dateStr) => {
                                                             const d = new Date(dateStr);
                                                             return isNaN(d) ? dateStr : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -979,15 +999,16 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                         <div style={{ height: '350px', width: '100%' }}>
                             {stats.most_searched_words && stats.most_searched_words.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={stats.most_searched_words} margin={{ top: 20, right: 30, left: 20, bottom: isMobile ? 10 : 5 }}>
+                                    <BarChart data={stats.most_searched_words} margin={{ top: 20, right: 30, left: 20, bottom: isMobile ? 30 : 50 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                         <XAxis
                                             dataKey="word"
                                             stroke="#9ca3af"
-                                            tick={!isMobile ? { fill: '#6b7280', fontSize: 12, fontWeight: 500 } : false}
+                                            tick={!isMobile ? { fill: '#6b7280', fontSize: 11, fontWeight: 500 } : false}
                                             axisLine={false}
                                             tickLine={false}
                                             interval={0}
+                                            height={40}
                                         />
                                         <YAxis
                                             allowDecimals={false}
@@ -1087,7 +1108,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                         <td className="font-medium">
                                                             {viewMode === 'top10' && stats?.top_quizzers ? (
                                                                 <span style={{ marginRight: '8px', color: '#f59e0b', fontWeight: 'bold' }}>
-                                                                    #{stats.top_quizzers.findIndex(tq => tq.username === user.username) + 1}
+                                                                    #{stats.top_quizzers.findIndex(tq => (tq.user_id === user.id) || (tq.username === user.username)) + 1}
                                                                 </span>
                                                             ) : null}
                                                             {user.username}
