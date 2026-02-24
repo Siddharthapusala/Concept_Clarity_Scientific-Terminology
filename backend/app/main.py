@@ -9,8 +9,6 @@ load_dotenv()
 
 
 Base.metadata.create_all(engine)
-
-
 app = FastAPI(title="ConceptClarity API")
 
 

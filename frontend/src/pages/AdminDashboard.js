@@ -113,7 +113,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
         setSelectedLanguages([]);
         setMinQuizScore('');
         setMaxQuizScore('');
-        setTimeframe('all'); // This will trigger useEffect fetch
+        setTimeframe('all');
     };
 
     const fetchExportData = async () => {

@@ -24,20 +24,19 @@ class FastLLMService:
         """Fetch the first YouTube video result for a query via scraping"""
         try:
             print(f"🎬 Fetching video for: {query}")
-            search_query = (query + " scientific explanation education documentary").replace(" ", "+")
-            url = f"https://www.youtube.com/results?search_query={search_query}&sp=EgIQAQ%253D%253D" # Filter for video only
-            # User-Agent to avoid bot blocking sometimes
+            refined_query = f"{query} science biology"
+            search_query = refined_query.replace(" ", "+")
+            url = f"https://www.youtube.com/results?search_query={search_query}&sp=EgIQAQ%253D%253D"
             headers = {"User-Agent": "Mozilla/5.0"}
             response = requests.get(url, headers=headers)
             
-            # Search for first video ID using regex
             video_ids = re.findall(r"watch\?v=(\S{11})", response.text)
             if video_ids:
                 video_id = video_ids[0]
                 print(f"✅ Found video ID: {video_id}")
                 return video_id
             
-            print("⚠️ No video results found in HTML scraper.")
+            print("⚠️ No video results found.")
             return None
         except Exception as e:
             print(f"❌ Error fetching video: {e}")
@@ -45,24 +44,21 @@ class FastLLMService:
 
 
     def get_google_image(self, query: str) -> str:
-        """Fetch the first image result from Google Images via scraping"""
+        """Fetch the first image result from Google Images with scientific context"""
         try:
-            print(f"🖼️ Fetching Google image for: {query}")
-            search_url = f"https://www.google.com/search?site=&tbm=isch&source=hp&biw=1873&bih=990&q={query}"
+            refined_query = f"{query} scientific diagram biology chemistry"
+            print(f"🖼️ Fetching Google image for: {refined_query}")
+            search_url = f"https://www.google.com/search?site=&tbm=isch&source=hp&q={refined_query.replace(' ', '+')}"
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
             response = requests.get(search_url, headers=headers, timeout=5)
             html = response.text
             
-            # Google thumbnails often come from gstatic
             urls = re.findall(r'(https://encrypted-tbn0\.gstatic\.com/images\?q=[^"\s\\]+)', html)
             
             if urls:
                 image_url = urls[0]
-                # Fix any potential encoding issues or extra chars if necessary
-                # Sometimes Google escapes sequences like \x3d which might need unescaping if json loaded
-                # But simple regex on tbn0 usually yields a working URL.
                 print(f"✅ Found Google Image URL: {image_url}")
                 return image_url
             
@@ -73,44 +69,39 @@ class FastLLMService:
             return None
 
     def get_wiki_image(self, query: str) -> str:
-        """Fetch a high-resolution image from Wikipedia using the library"""
+        """Fetch a high-resolution image from Wikipedia with scientific focus"""
         try:
             import wikipedia
-            print(f"🖼️ Fetching High-Res Wiki image for: {query}")
+            refined_query = f"{query} biology science"
+            print(f"🖼️ Fetching High-Res Wiki image for: {refined_query}")
             
-            # Search for the page
-            # auto_suggest=True helps find the right page
-            # limit=1 ensures we get the most relevant
-            results = wikipedia.search(query, results=1)
+            results = wikipedia.search(refined_query, results=1)
+            if not results:
+                # Try fallback without scientific keywords
+                results = wikipedia.search(query, results=1)
+                
             if not results:
                 print(f"⚠️ No wiki page found for {query}")
                 return None
             
             title = results[0]
             page = wikipedia.page(title, auto_suggest=True)
-            
-            # Get images
             images = page.images
             
-            # Filter for good images (jpg/png), ignore svgs, logos, icons
             candidates = []
             for img in images:
                 lower_img = img.lower()
                 if lower_img.endswith(('.jpg', '.jpeg', '.png')):
-                    # Exclude common noise
                     if any(x in lower_img for x in ['logo', 'icon', 'symbol', 'flag', 'map', 'svg']):
                         continue
                     candidates.append(img)
             
             if candidates:
-                # heuristic: prefer images with 'upload.wikimedia.org'
-                # usually the first few are the main ones
                 print(f"✅ Found High-Res Wiki Image: {candidates[0]}")
                 return candidates[0]
                 
             print("⚠️ No suitable images found on wiki page.")
             return None
-            
         except Exception as e:
             print(f"❌ Error fetching Wiki image: {e}")
             return None
@@ -125,10 +116,6 @@ class FastLLMService:
             elif language.lower() == "hindi":
                 lang_instruction = "IMPORTANT: Provide the output in Hindi script (देवनागरी). Do not use English transliteration."
             
-            # ... (prompt construction same as before - abbreviated for diff) ...
-            
-            # Strict constraints for ALL languages as per user requirement
-            # Strict constraints for ALL languages as per user requirement
             line_constraint = (
                 "Easy: Exactly 2 sentences/lines.\n"
                 "Medium: Exactly 4 sentences/lines.\n"
@@ -138,11 +125,12 @@ class FastLLMService:
 
             prompt = (
                 f"Explain '{query}' at three levels in {language} ({lang_instruction}). Return STRICT JSON only. "
-                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term'). "
-                f"Values MUST be in {language} script. "
+                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term', 'core_term'). "
+                f"Values MUST be in {language} script, EXCEPT 'core_term' which MUST be the single most relevant scientific English term (e.g. 'Cell structure'). "
                 f"\nRequirements:\n{line_constraint}\n"
                 f"Format: "
                 f"{{"
+                f"  \"core_term\": \"[Single scientific English term]\", "
                 f"  \"translated_term\": \"[The translation of '{query}' in {language}]\", "
                 f"  \"easy\": \"[Explanation in {language}]\", "
                 f"  \"medium\": \"[Explanation in {language}]\", "
@@ -155,7 +143,7 @@ class FastLLMService:
                 f"CRITICAL: The content of the definitions and examples MUST be in {language}. Do not provide English text."
             )
             
-            # Enhanced system prompt to prevent key translation
+
             system_prompt = (
                 f"You are a strict science tutor fluent in {language}. "
                 f"You must output valid JSON. "
@@ -177,28 +165,19 @@ class FastLLMService:
             )
             response_content = completion.choices[0].message.content
             
-            # Robust JSON extraction
             try:
-                # Find the first { and last }
                 start_idx = response_content.find('{')
                 end_idx = response_content.rfind('}')
-                
                 if start_idx != -1 and end_idx != -1:
                     response_content = response_content[start_idx:end_idx+1]
-                
                 data = json.loads(response_content)
             except json.JSONDecodeError:
-                print(f"❌ JSON Decode Error for {language}. Raw content: {response_content[:100]}...")
-                # Fallback to manual parsing or retry could go here, but for now fallback to default
+                print(f"❌ JSON Decode Error for {language}")
                 raise Exception("Invalid JSON received from LLM")
             
-            # Ensure fallback if keys are missing but others exist
             easy_def = data.get("easy") or data.get("medium") or f"{query} involves complex scientific principles."
-            
-            # Ensure examples exist if LLM failed
             examples = data.get("examples", [])
             if not examples or len(examples) < 2:
-                # Emergency fallback examples in target language if possible
                 if language.lower() == "telugu":
                     examples = [f"{query} యొక్క నిజ జీవిత ఉదాహరణ 1", f"{query} యొక్క నిజ జీవిత ఉదాహరణ 2"]
                 elif language.lower() == "hindi":
@@ -209,18 +188,19 @@ class FastLLMService:
             video_id = None
             image_url = None
 
+            video_id = None
+            image_url = None
+
             if fetch_media:
-                # Fetch YouTube Video
-                video_id = self.get_youtube_video(query)
-                
-                # Fetch Related Image
-                # Try Wiki first (Higher Res), then Google
-                image_url = self.get_wiki_image(query)
+                media_query = data.get("core_term", query)
+                video_id = self.get_youtube_video(media_query)
+                image_url = self.get_wiki_image(media_query)
                 if not image_url:
-                    image_url = self.get_google_image(query)
+                    image_url = self.get_google_image(media_query)
 
             result = {
                 "translated_term": data.get("translated_term", query),
+                "core_term": data.get("core_term", query),
                 "easy": data.get("easy", easy_def),
                 "medium": data.get("medium", easy_def),
                 "hard": data.get("hard", easy_def),
@@ -354,12 +334,10 @@ class FastLLMService:
             
             response_content = chat_completion.choices[0].message.content
             
-             # Clean potential markdown
             if "```json" in response_content:
                 response_content = response_content.split("```json")[1].split("```")[0].strip()
             elif "```" in response_content:
                 response_content = response_content.split("```")[0].strip()
-                
             data = json.loads(response_content)
             
             # Fetch YouTube Video
@@ -445,7 +423,6 @@ class FastLLMService:
 
             response_content = completion.choices[0].message.content
             
-            # Robust JSON extraction
             try:
                 start_idx = response_content.find('{')
                 end_idx = response_content.rfind('}')
@@ -454,8 +431,7 @@ class FastLLMService:
                 data = json.loads(response_content)
                 if "questions" not in data or not isinstance(data["questions"], list):
                     raise ValueError("JSON missing 'questions' array")
-            except Exception as e:
-                print(f"❌ JSON Decode Error for Quiz. Raw content: {response_content[:100]}...")
+            except Exception:
                 raise Exception("Invalid JSON received from LLM for Quiz")
 
             return {
@@ -466,10 +442,33 @@ class FastLLMService:
 
         except Exception as e:
             print(f"❌ Groq Quiz Generation Error: {e}")
-            return {
-                "quiz": [],
-                "error": "Failed to generate quiz. Please try again.",
-                "source": "error"
-            }
+    def transcribe_audio(self, audio_bytes: bytes, language: str = "en") -> dict:
+        """Transcribe audio using Groq Whisper model"""
+        start_time = time.time()
+        try:
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+                tmp.write(audio_bytes)
+                tmp_path = tmp.name
+
+            try:
+                with open(tmp_path, "rb") as file:
+                    transcription = self.client.audio.transcriptions.create(
+                        file=(tmp_path, file.read()),
+                        model="whisper-large-v3",
+                        prompt=f"The audio is about scientific concepts in {language}.",
+                        response_format="json",
+                        language=language if language in ["en", "te", "hi"] else "en"
+                    )
+                return {
+                    "text": transcription.text,
+                    "time_ms": int((time.time() - start_time) * 1000)
+                }
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+        except Exception as e:
+            print(f"❌ Groq Transcription Error: {e}")
+            return {"error": str(e)}
 
 llm_service = FastLLMService()

@@ -21,29 +21,19 @@ def get_db():
 
 
 def get_current_user_optional(authorization: Optional[str] = Header(default=None), db: Session = Depends(get_db)):
-    print(f"[DEBUG] get_current_user_optional called with auth header: {authorization[:20] if authorization else None}...")
     if not authorization or not authorization.startswith("Bearer "):
-        print("[DEBUG] No auth header or does not start with Bearer")
         return None
     token = authorization.split(" ", 1)[1]
     
-    from ..auth import decode_token # ensure it's imported
-    
     try:
         sub = decode_token(token)
-    except Exception as e:
-        print(f"[DEBUG] Token decode failed: {e}")
+    except Exception:
         return None
         
     if not sub:
-        print("[DEBUG] Decoded token gave no sub")
         return None
         
     user = db.query(User).filter((User.email == sub) | (User.username == sub)).first()
-    if not user:
-        print(f"[DEBUG] User not found for sub: {sub}")
-    else:
-        print(f"[DEBUG] User found: {user.username}")
     return user
 
 
@@ -87,6 +77,7 @@ def search_term(
             result_data = {
                 "term": q,
                 "translated_term": llm_explanation.get("translated_term", q) if isinstance(llm_explanation, dict) else q,
+                "core_term": llm_explanation.get("core_term", q) if isinstance(llm_explanation, dict) else q,
                 "definition": definition,
                 "definition_levels": llm_explanation if isinstance(llm_explanation, dict) else {"easy": definition, "medium": definition, "hard": definition},
                 "examples": llm_explanation.get("examples", []) if isinstance(llm_explanation, dict) else [],
@@ -267,7 +258,7 @@ def get_user_quiz(
                     break
 
             if not unique_terms:
-                unique_terms = ["Photosynthesis", "Gravity", "DNA", "Solar System", "Atoms", "Force", "Energy", "Elements"] # Basic fallback
+                unique_terms = ["Photosynthesis", "Gravity", "DNA", "Solar System", "Atoms", "Force", "Energy", "Elements"]
 
         if level == "easy":
             num_q = 5
@@ -313,7 +304,6 @@ def save_quiz_result(
         db.commit()
         db.refresh(new_result)
         
-        # Build the return object mapping the username
         return QuizResultOut(
             id=new_result.id,
             user_id=new_result.user_id,
@@ -368,3 +358,14 @@ def get_quiz_leaderboard(
     except Exception as e:
         print(f"Error fetching leaderboard: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch leaderboard")
+@router.post("/transcribe")
+async def transcribe(
+    file: UploadFile = File(...),
+    language: str = Query("en")
+):
+    try:
+        contents = await file.read()
+        result = llm_service.transcribe_audio(contents, language)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
