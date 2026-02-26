@@ -5,8 +5,9 @@ import CustomSelect from '../components/CustomSelect';
 import './Auth.css';
 
 
-export default function Signup() {
-  const [formData, setFormData] = useState({ email: '', username: '', role: 'general_user', language: 'en', password: '', confirmPassword: '' });
+export default function Signup({ t, onLanguageChange }) {
+  const text = t || {};
+  const [formData, setFormData] = useState({ email: '', username: '', role: 'general_user', language: localStorage.getItem('language') || 'en', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -23,21 +24,21 @@ export default function Signup() {
 
   const checkPasswordStrength = (password) => {
     const requirements = [
-      { test: password.length >= 8, message: 'At least 8 characters' },
-      { test: password.length <= 128, message: 'Not more than 128 characters' },
-      { test: /[A-Z]/.test(password), message: 'One uppercase letter' },
-      { test: /[a-z]/.test(password), message: 'One lowercase letter' },
-      { test: /\d/.test(password), message: 'One number' },
-      { test: /[!@#$%^&*(),.?":{}|<>]/.test(password), message: 'One special character' }
+      { test: password.length >= 8, message: text.passwordReqLengthMin || 'At least 8 characters' },
+      { test: password.length <= 128, message: text.passwordReqLengthMax || 'Not more than 128 characters' },
+      { test: /[A-Z]/.test(password), message: text.passwordReqUppercase || 'One uppercase letter' },
+      { test: /[a-z]/.test(password), message: text.passwordReqLowercase || 'One lowercase letter' },
+      { test: /\d/.test(password), message: text.passwordReqNumber || 'One number' },
+      { test: /[!@#$%^&*(),.?":{}|<>]/.test(password), message: text.passwordReqSpecialChar || 'One special character' }
     ];
     const passedRequirements = requirements.filter(req => req.test);
     const score = (passedRequirements.length / requirements.length) * 100;
 
     let message = '';
-    if (score === 100) message = 'Strong password';
-    else if (score >= 66) message = 'Medium strength';
-    else if (score >= 33) message = 'Weak password';
-    else message = 'Very weak password';
+    if (score === 100) message = text.strongPassword || 'Strong password';
+    else if (score >= 66) message = text.mediumStrength || 'Medium strength';
+    else if (score >= 33) message = text.weakPassword || 'Weak password';
+    else message = text.veryWeakPassword || 'Very weak password';
 
     return { score, message, requirements };
   };
@@ -49,28 +50,31 @@ export default function Signup() {
     if (name === 'password') {
       setPasswordStrength(checkPasswordStrength(value));
     }
+    if (name === 'language' && typeof onLanguageChange === 'function') {
+      onLanguageChange(value);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email && !formData.username) {
-      setError('Enter either email or username');
+      setError(text.enterEmailOrUsername || 'Enter either email or username');
       return;
     }
     if (formData.email && !validateEmail(formData.email)) {
-      setError('Please enter a valid email address');
+      setError(text.validEmailAddress || 'Please enter a valid email address');
       return;
     }
     if (formData.username && !validateUsername(formData.username)) {
-      setError('Username must be 3-20 chars, letters/numbers/_');
+      setError(text.usernameValidation || 'Username must be 3-20 chars, letters/numbers/_');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(text.passwordsDoNotMatch || 'Passwords do not match');
       return;
     }
     if (passwordStrength.score < 100) {
-      setError('Please meet all password requirements');
+      setError(text.meetPasswordRequirements || 'Please meet all password requirements');
       return;
     }
 
@@ -92,7 +96,7 @@ export default function Signup() {
         <div class="success-content">
           <div class="success-icon">✅</div>
           <div class="success-text">
-            <h3>Account Created Successfully!</h3>
+            <h3>${text.accountCreatedSuccessfully || 'Account Created Successfully!'}</h3>
           </div>
         </div>
       `;
@@ -103,10 +107,10 @@ export default function Signup() {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      let errorMessage = 'Signup failed. Please try again.';
+      let errorMessage = text.signupFailed || 'Signup failed. Please try again.';
       if (err.response?.data?.detail) {
         if (err.response.data.detail === 'Email already exists') {
-          errorMessage = 'This email is already registered. Please login instead.';
+          errorMessage = text.emailAlreadyExists || 'This email is already registered. Please login instead.';
         } else {
           errorMessage = err.response.data.detail;
         }
@@ -125,19 +129,19 @@ export default function Signup() {
         <div className="auth-header">
           <div className="auth-logo">
             <div className="logo-icon">🧠</div>
-            <div className="logo-text">ConceptClarity</div>
+            <div className="logo-text">{text.heroTitle || 'ConceptClarity'}</div>
           </div>
-          <h2 className="auth-title">Create Your Account</h2>
+          <h2 className="auth-title">{text.createAccountTitle || 'Create Your Account'}</h2>
         </div>
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
-            <label htmlFor="email" className="form-label">Email Address</label>
+            <label htmlFor="email" className="form-label">{text.email || 'Email Address'}</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder={text.enterYourEmail || "Enter your email"}
               value={formData.email}
               onChange={handleChange}
               className="form-input"
@@ -146,62 +150,62 @@ export default function Signup() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="username" className="form-label">Username</label>
+            <label htmlFor="username" className="form-label">{text.username || 'Username'}</label>
             <input
               id="username"
               name="username"
               type="text"
-              placeholder="Choose a unique username"
+              placeholder={text.chooseUniqueUsername || "Choose a unique username"}
               value={formData.username}
               onChange={handleChange}
               className="form-input"
               disabled={loading}
               autoComplete="username"
             />
-            <small className="helper-text">You can sign in using email or username</small>
+            <small className="helper-text">{text.signInEmailOrUsername || 'You can sign in using email or username'}</small>
           </div>
           <div className="form-group">
-            <label htmlFor="role" className="form-label">Role</label>
+            <label htmlFor="role" className="form-label">{text.role || 'Role'}</label>
             <CustomSelect
               name="role"
               className="role-select"
               value={formData.role}
               onChange={handleChange}
               options={[
-                { value: 'student', label: 'Student' },
-                { value: 'teacher', label: 'Teacher' },
-                { value: 'scientist', label: 'Scientist' },
-                { value: 'journalist', label: 'Journalist' },
-                { value: 'engineer', label: 'Engineer' },
-                { value: 'healthcare_professional', label: 'Healthcare Professional' },
-                { value: 'general_user', label: 'General User' }
+                { value: 'student', label: text.roleStudent || 'Student' },
+                { value: 'teacher', label: text.roleTeacher || 'Teacher' },
+                { value: 'scientist', label: text.roleScientist || 'Scientist' },
+                { value: 'journalist', label: text.roleJournalist || 'Journalist' },
+                { value: 'engineer', label: text.roleEngineer || 'Engineer' },
+                { value: 'healthcare_professional', label: text.roleHealthcareProfessional || 'Healthcare Professional' },
+                { value: 'general_user', label: text.roleGeneralUser || 'General User' }
               ]}
               disabled={loading}
             />
           </div>
           <div className="form-group">
-            <label htmlFor="language" className="form-label">Preferred Language</label>
+            <label htmlFor="language" className="form-label">{text.preferredLanguage || 'Preferred Language'}</label>
             <CustomSelect
               name="language"
               className="language-select"
               value={formData.language}
               onChange={handleChange}
               options={[
-                { value: 'en', label: 'English' },
-                { value: 'te', label: 'Telugu' },
-                { value: 'hi', label: 'Hindi' }
+                { value: 'en', label: text.languageEnglish || 'English' },
+                { value: 'te', label: text.languageTelugu || 'Telugu' },
+                { value: 'hi', label: text.languageHindi || 'Hindi' }
               ]}
               disabled={loading}
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
+            <label htmlFor="password" className="form-label">{text.password || 'Password'}</label>
             <div className="input-container">
               <input
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
+                placeholder={text.createStrongPassword || "Create a strong password"}
                 value={formData.password}
                 onChange={handleChange}
                 required
@@ -224,24 +228,15 @@ export default function Signup() {
                 {passwordStrength.message}
               </span>
             </div>
-            {formData.password && (
-              <div className="password-requirements">
-                {passwordStrength.requirements.map((req, index) => (
-                  <div key={index} className={`requirement ${req.test ? 'met' : 'unmet'}`}>
-                    {req.test ? '✅' : '❌'} {req.message}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
           <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="form-label">{text.confirmPassword || 'Confirm Password'}</label>
             <div className="input-container">
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm your password"
+                placeholder={text.confirmYourPassword || "Confirm your password"}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
@@ -258,31 +253,22 @@ export default function Signup() {
                 {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            {formData.confirmPassword && (
-              <div className="password-match">
-                {formData.password === formData.confirmPassword ? (
-                  <span className="match-text match">✅ Passwords match</span>
-                ) : (
-                  <span className="match-text mismatch">❌ Passwords don't match</span>
-                )}
-              </div>
-            )}
           </div>
           <div className="form-actions">
             <button type="submit" disabled={loading} className="auth-button">
               {loading ? (
                 <span className="button-content">
                   <span className="loading-spinner"></span>
-                  Creating Account...
+                  {text.creatingAccount || 'Creating Account...'}
                 </span>
               ) : (
-                'Create Account'
+                text.createAccount || 'Create Account'
               )}
             </button>
           </div>
         </form>
         <div className="auth-footer">
-          <p className="footer-text">Already have an account? <Link to="/login" className="auth-link">Sign In</Link></p>
+          <p className="footer-text">{text.alreadyAccount || 'Already have an account?'} <Link to="/login" className="auth-link">{text.login || 'Sign In'}</Link></p>
         </div>
       </div>
     </div>

@@ -21,6 +21,7 @@ function App() {
   const [language, setLanguage] = useState(() => {
     return localStorage.getItem('language') || 'en';
   });
+  const [isQuizActive, setIsQuizActive] = useState(false);
 
   const t = translations[language] || translations['en'];
 
@@ -95,13 +96,17 @@ function App() {
   return (
     <Router>
       <div className={`app ${isDarkMode ? 'dark-mode' : ''}`}>
-        <Navbar
-          isAuthenticated={isAuthenticated}
-          onLogout={handleLogout}
-          isDarkMode={isDarkMode}
-          toggleTheme={toggleTheme}
-          t={t}
-        />
+        {!isQuizActive && (
+          <Navbar
+            isAuthenticated={isAuthenticated}
+            onLogout={handleLogout}
+            isDarkMode={isDarkMode}
+            toggleTheme={toggleTheme}
+            t={t}
+            language={language}
+            onLanguageChange={handleLanguageChange}
+          />
+        )}
         <main className="main-content">
           <Routes>
             <Route
@@ -124,6 +129,9 @@ function App() {
                   <QuizPage
                     isDarkMode={isDarkMode}
                     language={language}
+                    t={t}
+                    isQuizActive={isQuizActive}
+                    setIsQuizActive={setIsQuizActive}
                   /> :
                   <Navigate to="/login" replace />
               }
@@ -153,7 +161,7 @@ function App() {
               path="/signup"
               element={
                 !isAuthenticated ?
-                  <Signup t={t} /> :
+                  <Signup t={t} onLanguageChange={handleLanguageChange} /> :
                   <Navigate to="/" replace />
               }
             />
@@ -164,6 +172,8 @@ function App() {
                 <AdminDashboard
                   isDarkMode={isDarkMode}
                   toggleTheme={toggleTheme}
+                  t={t}
+                  language={language}
                 />
               }
             />

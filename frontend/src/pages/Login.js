@@ -4,7 +4,8 @@ import { api } from '../services/api';
 import './Auth.css';
 
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, t }) {
+  const text = t || {};
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ export default function Login({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isEmail(formData.identifier) && !isUsername(formData.identifier)) {
-      setError('Enter a valid email or username');
+      setError(text.enterEmailOrUsername || 'Enter a valid email or username');
       return;
     }
     setLoading(true);
@@ -43,11 +44,11 @@ export default function Login({ onLogin }) {
       navigate('/');
     } catch (err) {
       console.error("Login Error Details:", err);
-      let msg = 'Login failed.';
+      let msg = text.loginFailed || 'Login failed.';
       if (err.response) {
         msg = err.response.data?.detail || err.response.data?.message || `Server Error: ${err.response.status}`;
       } else if (err.request) {
-        msg = "Network Error: Unable to reach the server. Check internet connection.";
+        msg = text.networkError || "Network Error: Unable to reach the server.";
       } else {
         msg = err.message;
       }
@@ -63,20 +64,20 @@ export default function Login({ onLogin }) {
         <div className="auth-header">
           <div className="auth-logo">
             <div className="logo-icon">🧠</div>
-            <div className="logo-text">ConceptClarity</div>
+            <div className="logo-text">{text.heroTitle || 'ConceptClarity'}</div>
           </div>
-          <h2 className="auth-title">Welcome Back</h2>
-          <p className="auth-subtitle">Sign in to access your personalized learning experience</p>
+          <h2 className="auth-title">{text.welcomeBack || 'Welcome Back'}</h2>
+          <p className="auth-subtitle">{text.signInSubtitle || 'Sign in to access your personalized learning experience'}</p>
         </div>
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
-            <label htmlFor="identifier" className="form-label">Email or Username</label>
+            <label htmlFor="identifier" className="form-label">{text.emailOrUsername || 'Email or Username'}</label>
             <input
               id="identifier"
               name="identifier"
               type="text"
-              placeholder="Enter email or username"
+              placeholder={text.enterEmailOrUsername || "Enter email or username"}
               value={formData.identifier}
               onChange={handleChange}
               required
@@ -86,13 +87,13 @@ export default function Login({ onLogin }) {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
+            <label htmlFor="password" className="form-label">{text.password || 'Password'}</label>
             <div className="input-container">
               <input
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
+                placeholder={text.enterPassword || "Enter your password"}
                 value={formData.password}
                 onChange={handleChange}
                 required
@@ -115,16 +116,16 @@ export default function Login({ onLogin }) {
               {loading ? (
                 <span className="button-content">
                   <span className="loading-spinner"></span>
-                  Signing In...
+                  {text.signingIn || 'Signing In...'}
                 </span>
               ) : (
-                'Sign In'
+                text.signIn || 'Sign In'
               )}
             </button>
           </div>
         </form>
         <div className="auth-footer">
-          <p className="footer-text">Don't have an account? <Link to="/signup" className="auth-link">Create Account</Link></p>
+          <p className="footer-text">{text.noAccount || "Don't have an account?"} <Link to="/signup" className="auth-link">{text.createAccount || 'Create Account'}</Link></p>
         </div>
       </div>
     </div>

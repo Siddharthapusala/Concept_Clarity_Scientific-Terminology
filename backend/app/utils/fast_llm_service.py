@@ -407,8 +407,17 @@ class FastLLMService:
 
             system_prompt = (
                 f"You are an expert science teacher creating a quiz in {language}. "
-                f"You must strictly output valid JSON containing exactly {num_questions} questions."
+                f"You MUST strictly output valid JSON containing EXACTLY {num_questions} questions. "
+                f"Failure to provide exactly {num_questions} questions will result in a system error."
             )
+
+            # Increase max_tokens for larger quizzes
+            if num_questions <= 5:
+                max_tokens = 1500
+            elif num_questions <= 10:
+                max_tokens = 3000
+            else:
+                max_tokens = 6000
 
             completion = self.client.chat.completions.create(
                 messages=[
@@ -418,7 +427,7 @@ class FastLLMService:
                 model=self.text_model,
                 response_format={"type": "json_object"},
                 temperature=0.6,
-                max_tokens=2000 if num_questions <= 10 else 4000
+                max_tokens=max_tokens
             )
 
             response_content = completion.choices[0].message.content
@@ -431,11 +440,16 @@ class FastLLMService:
                 data = json.loads(response_content)
                 if "questions" not in data or not isinstance(data["questions"], list):
                     raise ValueError("JSON missing 'questions' array")
+                
+                # Check question count
+                received_count = len(data["questions"])
+                if received_count != num_questions:
+                    print(f"⚠️ LLM returned {received_count} instead of {num_questions}. Prompting for strictness.")
             except Exception:
                 raise Exception("Invalid JSON received from LLM for Quiz")
 
             return {
-                "quiz": data["questions"],
+                "quiz": data["questions"][:num_questions],
                 "source": "groq",
                 "time_ms": int((time.time() - start_time) * 1000)
             }

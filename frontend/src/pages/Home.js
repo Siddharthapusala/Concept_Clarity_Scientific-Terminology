@@ -597,7 +597,10 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
                         <button
                           key={opt.code}
                           className={`lang-chip ${resultLanguage === opt.code ? 'active' : ''}`}
-                          onClick={() => handleSearch(null, searchTerm, opt.code)}
+                          onClick={() => {
+                            setLanguage(opt.code);
+                            handleSearch(null, searchTerm, opt.code);
+                          }}
                         >
                           {opt.label}
                         </button>

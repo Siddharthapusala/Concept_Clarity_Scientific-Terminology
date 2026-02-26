@@ -3,12 +3,13 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import HistoryModal from './HistoryModal';
 import './Navbar.css';
-export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTheme }) {
+export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTheme, t }) {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
+  const text = t || {};
 
   const handleLogout = () => {
     onLogout();
@@ -39,12 +40,13 @@ export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTh
     }
     setShowHistory(!showHistory);
   };
+
   return (
     <nav className={`navbar ${isDarkMode ? 'dark' : ''}`}>
       <div className="nav-container">
         <Link to="/" className="nav-logo">
           <span className="logo-icon">🧠</span>
-          ConceptClarity
+          {text.heroTitle || 'ConceptClarity'}
         </Link>
         <div className="nav-menu">
           {!currentPath.includes('admin') && (
@@ -61,22 +63,22 @@ export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTh
                   <Link
                     to="/quiz"
                     className={`nav-link quiz-link ${currentPath === '/quiz' ? 'active' : ''}`}
-                    title="Play Quiz"
+                    title={text.quiz || "Quiz"}
                   >
-                    🎮 Quiz
+                    🎮 {text.quiz || 'Quiz'}
                   </Link>
                   <div className="profile-widget">
                     <button
                       className="history-icon-btn"
                       onClick={toggleHistory}
-                      title="Search History"
+                      title={text.history || "Search History"}
                     >
                       <svg className="history-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
                     </button>
-                    <button className="profile-icon-btn" onClick={goProfile}>
+                    <button className="profile-icon-btn" onClick={goProfile} title={text.profile || 'Profile'}>
                       <svg className="user-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="12" cy="8" r="4"></circle>
                         <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
@@ -90,20 +92,19 @@ export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTh
                     to="/login"
                     className={`nav-link ${currentPath === '/login' || currentPath === '/' ? 'active' : ''}`}
                   >
-                    Login
+                    {text.login || 'Login'}
                   </Link>
                   <Link
                     to="/signup"
                     className={`nav-button signup-btn ${currentPath === '/signup' || currentPath === '/' ? 'active' : ''}`}
                   >
-                    Sign Up
+                    {text.signUp || 'Sign Up'}
                   </Link>
                   <Link
                     to="/admin-login"
                     className={`nav-link ${currentPath === '/admin-login' ? 'active' : ''}`}
-                    style={{ marginLeft: '1rem' }}
                   >
-                    Admin
+                    {text.admin || 'Admin'}
                   </Link>
                 </>
               )}

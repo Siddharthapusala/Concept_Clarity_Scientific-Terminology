@@ -29,7 +29,8 @@ html {
 
 .main-content {
   flex: 1;
-  padding-top: 0;
+  padding-top: 72px;
+  /* Height of fixed navbar */
 }
 
 button {

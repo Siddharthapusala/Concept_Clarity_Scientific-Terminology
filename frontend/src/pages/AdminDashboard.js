@@ -7,10 +7,15 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Navbar from '../components/Navbar';
 import CustomSelect from '../components/CustomSelect';
+import { translations } from '../utils/translations';
 import './Admin.css';
 import '../components/HistoryModal.css';
 
-export default function AdminDashboard({ isDarkMode, toggleTheme }) {
+export default function AdminDashboard({ isDarkMode, toggleTheme, t, language }) {
+    const [adminLanguage, setAdminLanguage] = useState(() => {
+        return localStorage.getItem('adminLanguage') || 'en';
+    });
+    const text = translations[adminLanguage] || translations['en'];
     const [stats, setStats] = useState(null);
     const [error, setError] = useState('');
     const [showUsersModal, setShowUsersModal] = useState(false);
@@ -49,15 +54,15 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
     const navigate = useNavigate();
 
     const formatDuration = (seconds) => {
-        if (!seconds && seconds !== 0) return '0s';
+        if (!seconds && seconds !== 0) return `0${text.seconds_abbr || 's'}`;
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = seconds % 60;
 
         let res = '';
-        if (h > 0) res += `${h}h `;
-        if (m > 0) res += `${m}m `;
-        if (s > 0 || res === '') res += `${s}s`;
+        if (h > 0) res += `${h}${text.hours_abbr || 'h'} `;
+        if (m > 0) res += `${m}${text.mins_abbr || 'm'} `;
+        if (s > 0 || res === '') res += `${s}${text.seconds_abbr || 's'}`;
         return res.trim();
     };
 
@@ -400,7 +405,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
         return (
             <div className="admin-page admin-loading-container">
                 <div className="admin-spinner"></div>
-                <p style={{ color: 'var(--admin-text-secondary)', fontWeight: '500' }}>Fetching Data...</p>
+                <p style={{ color: 'var(--admin-text-secondary)', fontWeight: '500' }}>{text.fetchingData || 'Fetching Data...'}</p>
             </div>
         );
     }
@@ -411,33 +416,48 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                 <header className="admin-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <span style={{ fontSize: '1.75rem' }}>🛡️</span>
-                        <h1 className="admin-title">Admin Dashboard</h1>
+                        <h1 className="admin-title">{text.adminDashboard || 'Admin Dashboard'}</h1>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', marginRight: '1rem' }}>
-                            <button className="admin-btn-secondary" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--admin-card-bg)', border: '1px solid var(--admin-border)', color: 'var(--admin-text)' }}>
-                                📄 CSV
+                    <div className="admin-header-actions">
+                        <div className="admin-export-group">
+                            <button className="admin-btn-secondary" onClick={handleExportCSV}>
+                                📄 {text.csv || 'CSV'}
                             </button>
-                            <button className="admin-btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--admin-card-bg)', border: '1px solid var(--admin-border)', color: 'var(--admin-text)' }}>
-                                📑 Excel
+                            <button className="admin-btn-secondary" onClick={handleExportExcel}>
+                                📑 {text.excel || 'Excel'}
                             </button>
                         </div>
                         <button
                             className="admin-btn-secondary"
                             onClick={() => setShowFilters(!showFilters)}
-                            style={{ marginRight: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--admin-card-bg)', border: '1px solid var(--admin-border)', color: 'var(--admin-text)' }}
                         >
-                            📊 Filters
+                            📊 {text.filters || 'Filters'}
                         </button>
                         <button
                             className="admin-theme-btn"
                             onClick={toggleTheme}
-                            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                            title={isDarkMode ? (text.lightMode || "Switch to Light Mode") : (text.darkMode || "Switch to Dark Mode")}
                         >
                             {isDarkMode ? '☀️' : '🌙'}
                         </button>
+                        <div className="admin-lang-selector">
+                            <span className="lang-icon">🌐</span>
+                            <select
+                                value={adminLanguage}
+                                onChange={(e) => {
+                                    const newLang = e.target.value;
+                                    setAdminLanguage(newLang);
+                                    localStorage.setItem('adminLanguage', newLang);
+                                }}
+                                className="admin-lang-dropdown"
+                            >
+                                <option value="en">English</option>
+                                <option value="te">తెలుగు</option>
+                                <option value="hi">हिन्दी</option>
+                            </select>
+                        </div>
                         <button onClick={handleLogout} className="admin-logout-btn">
-                            Sign Out
+                            {text.signOut || 'Sign Out'}
                         </button>
                     </div>
                 </header>
@@ -461,17 +481,17 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
                             {/* Quick Timeframe */}
                             <div className="filter-group">
-                                <label className="filter-label">Quick Range</label>
+                                <label className="filter-label">{text.quickRange || 'Quick Range'}</label>
                                 <CustomSelect
                                     name="timeframe"
                                     className="filter-input-custom"
                                     value={timeframe}
                                     onChange={(e) => { setTimeframe(e.target.value); setStartDate(''); setEndDate(''); }}
                                     options={[
-                                        { value: 'all', label: 'All Time' },
-                                        { value: '30d', label: 'Last 30 Days' },
-                                        { value: '7d', label: 'Last 7 Days' },
-                                        { value: 'custom', label: 'Custom Dates' }
+                                        { value: 'all', label: text.allTime || 'All Time' },
+                                        { value: '30d', label: text.last30Days || 'Last 30 Days' },
+                                        { value: '7d', label: text.last7Days || 'Last 7 Days' },
+                                        { value: 'custom', label: text.customDates || 'Custom Dates' }
                                     ]}
                                 />
                             </div>
@@ -480,11 +500,11 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                             {timeframe === 'custom' && (
                                 <>
                                     <div className="filter-group">
-                                        <label className="filter-label">Start Date</label>
+                                        <label className="filter-label">{text.startDate || 'Start Date'}</label>
                                         <input type="date" className="filter-input" value={startDate} onChange={e => { setStartDate(e.target.value); setTimeframe('custom'); }} />
                                     </div>
                                     <div className="filter-group">
-                                        <label className="filter-label">End Date</label>
+                                        <label className="filter-label">{text.endDate || 'End Date'}</label>
                                         <input type="date" className="filter-input" value={endDate} onChange={e => { setEndDate(e.target.value); setTimeframe('custom'); }} />
                                     </div>
                                 </>
@@ -492,25 +512,25 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
 
                             {/* Quiz Score Range */}
                             <div className="filter-group">
-                                <label className="filter-label">Quiz Score (%)</label>
+                                <label className="filter-label">{text.quizScore || 'Quiz Score (%)'}</label>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <input type="number" placeholder="Min" min="0" max="100" className="filter-input" style={{ width: '50%' }} value={minQuizScore} onChange={e => setMinQuizScore(e.target.value)} />
-                                    <input type="number" placeholder="Max" min="0" max="100" className="filter-input" style={{ width: '50%' }} value={maxQuizScore} onChange={e => setMaxQuizScore(e.target.value)} />
+                                    <input type="number" placeholder={text.min || "Min"} min="0" max="100" className="filter-input" style={{ width: '50%' }} value={minQuizScore} onChange={e => setMinQuizScore(e.target.value)} />
+                                    <input type="number" placeholder={text.max || "Max"} min="0" max="100" className="filter-input" style={{ width: '50%' }} value={maxQuizScore} onChange={e => setMaxQuizScore(e.target.value)} />
                                 </div>
                             </div>
 
                             {/* Multi-Select Roles */}
                             <div className="filter-group">
-                                <label className="filter-label">User Types</label>
+                                <label className="filter-label">{text.userTypes || 'User Types'}</label>
                                 <div className="multi-select-container">
                                     <div className="filter-input multi-select-btn" onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}>
-                                        {selectedRoles.length === 0 ? "All Roles" : `${selectedRoles.length} Selected`}
+                                        {selectedRoles.length === 0 ? (text.allRoles || "All Roles") : `${selectedRoles.length} ${text.selected || 'Selected'}`}
                                     </div>
                                     {rolesDropdownOpen && (
                                         <div className="multi-select-dropdown">
                                             <label className="multi-select-option" style={{ fontWeight: 'bold' }}>
                                                 <input type="checkbox" checked={selectedRoles.length === 0} onChange={() => setSelectedRoles([])} />
-                                                All Roles
+                                                {text.allRoles || 'All Roles'}
                                             </label>
                                             {availableRoles.map(role => (
                                                 <label key={role} className="multi-select-option">
@@ -525,10 +545,10 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
 
                             {/* Multi-Select Languages */}
                             <div className="filter-group">
-                                <label className="filter-label">Languages</label>
+                                <label className="filter-label">{text.languages || 'Languages'}</label>
                                 <div className="multi-select-container">
                                     <div className="filter-input multi-select-btn" onClick={() => setLangsDropdownOpen(!langsDropdownOpen)}>
-                                        {selectedLanguages.length === 0 ? "Select Languages..." : `${selectedLanguages.length} Selected`}
+                                        {selectedLanguages.length === 0 ? (text.selectLanguages || "Select Languages...") : `${selectedLanguages.length} ${text.selected || 'Selected'}`}
                                     </div>
                                     {langsDropdownOpen && (
                                         <div className="multi-select-dropdown">
@@ -554,7 +574,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                 borderRadius: '8px',
                                 transition: 'all 0.2s',
                                 fontWeight: 600
-                            }}>Clear All</button>
+                            }}>{text.clearAll || 'Clear All'}</button>
                             <button className="admin-btn-primary filter-btn-animated" onClick={applyFilters} style={{
                                 background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
                                 color: 'white',
@@ -564,7 +584,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                 boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
                                 transition: 'all 0.2s',
                                 fontWeight: 600
-                            }}>Apply Filters ✨</button>
+                            }}>{text.applyFilters || 'Apply Filters'} ✨</button>
                         </div>
                     </div>
                 )}
@@ -576,40 +596,40 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                         style={{ cursor: 'pointer' }}
                         title="Click to view details"
                     >
-                        <div className="stat-title">Total Members</div>
+                        <div className="stat-title">{text.totalMembers || 'Total Members'}</div>
                         <div className="stat-value">{stats.total_members}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>View Details →</div>
+                        <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>{text.viewDetails || 'View Details'} →</div>
                     </div>
                     <div
                         className="stat-card green animate-fade-in delay-200"
                         onClick={() => fetchUsers('reviews')}
                         style={{ cursor: 'pointer' }}
-                        title="Click to view reviews"
+                        title={text.clickToViewReviews || "Click to view reviews"}
                     >
-                        <div className="stat-title">Total Reviews</div>
+                        <div className="stat-title">{text.totalReviews || 'Total Reviews'}</div>
                         <div className="stat-value">
                             {stats.total_reviews !== undefined ? stats.total_reviews : '-'}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#10b981', marginTop: '0.5rem' }}>View Details →</div>
+                        <div style={{ fontSize: '0.8rem', color: '#10b981', marginTop: '0.5rem' }}>{text.viewDetails || 'View Details'} →</div>
                     </div>
                     <div className="stat-card amber animate-fade-in delay-300">
-                        <div className="stat-title">Avg. Rating</div>
+                        <div className="stat-title">{text.avgRating || 'Avg. Rating'}</div>
                         <div className="stat-value">
                             {stats.average_rating !== undefined ? stats.average_rating : '-'}
                             <span style={{ fontSize: '1.5rem', color: '#f59e0b', marginLeft: '0.5rem' }}>★</span>
                         </div>
                     </div>
 
-                    <div className="stat-card animate-fade-in delay-400" style={{ borderLeftColor: '#ec4899', cursor: 'pointer' }} onClick={() => fetchUsers('quiz')} title="Click to view quiz players">
-                        <div className="stat-title">Quiz Players</div>
+                    <div className="stat-card animate-fade-in delay-400" style={{ borderLeftColor: '#ec4899', cursor: 'pointer' }} onClick={() => fetchUsers('quiz')} title={text.clickToViewPlayers || "Click to view quiz players"}>
+                        <div className="stat-title">{text.quizPlayers || 'Quiz Players'}</div>
                         <div className="stat-value">
                             {stats.total_quiz_users !== undefined ? stats.total_quiz_users : '-'}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#ec4899', marginTop: '0.5rem' }}>View Details →</div>
+                        <div style={{ fontSize: '0.8rem', color: '#ec4899', marginTop: '0.5rem' }}>{text.viewDetails || 'View Details'} →</div>
                     </div>
 
                     <div className="stat-card animate-fade-in delay-100" style={{ borderLeftColor: '#8b5cf6' }}>
-                        <div className="stat-title">Video Views</div>
+                        <div className="stat-title">{text.videoViews || 'Video Views'}</div>
                         <div className="stat-value">
                             {stats.total_video_views !== undefined ? stats.total_video_views : '-'}
                             <span style={{ fontSize: '1.5rem', marginLeft: '0.5rem' }}>🎬</span>
@@ -617,17 +637,17 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                     </div>
 
                     <div className="stat-card animate-fade-in delay-100" style={{ borderLeftColor: '#f43f5e', cursor: 'pointer', backgroundImage: 'linear-gradient(to right, rgba(244, 63, 94, 0.05), transparent)' }} onClick={() => setShowExportModal(true)}>
-                        <div className="stat-title">Data Exports</div>
+                        <div className="stat-title">{text.dataExports || 'Data Exports'}</div>
                         <div className="stat-value" style={{ display: 'flex', alignItems: 'center' }}>
                             <span style={{ fontSize: '1.5rem', marginLeft: '0.5rem' }}>⬇️</span>
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#f43f5e', marginTop: '0.5rem' }}>View Formats →</div>
+                        <div style={{ fontSize: '0.8rem', color: '#f43f5e', marginTop: '0.5rem' }}>{text.viewFormats || 'View Formats'} →</div>
                     </div>
                 </div>
 
                 {stats.top_quizzers && stats.top_quizzers.length > 0 && (
                     <div className="chart-card leaderboard-section animate-slide-up" style={{ marginBottom: '2rem' }}>
-                        <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Top Quizzers</h2>
+                        <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{text.topQuizzers || 'Top Quizzers'}</h2>
 
                         <div className="podium-container">
                             {stats.top_quizzers.length > 1 && (
@@ -676,7 +696,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                     onClick={() => fetchUsers('top10', true, true)}
                                     style={{ width: 'auto', padding: '0.75rem 2rem', borderRadius: '50px' }}
                                 >
-                                    View Top 10 Quiz Players
+                                    {text.viewTop10 || 'View Top 10 Quiz Players'}
                                 </button>
                             </div>
                         )}
@@ -692,7 +712,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                         <>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                                 <div className="chart-card animate-slide-up">
-                                    <h2 className="section-title">Search Complexity</h2>
+                                    <h2 className="section-title">{text.searchComplexity || 'Search Complexity'}</h2>
                                     <div style={{ height: '300px', width: '100%' }}>
                                         {filteredLevels.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
@@ -710,6 +730,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                             const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                                             const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
+                                                            const displayName = text[name.toLowerCase()] || (name ? name.charAt(0).toUpperCase() + name.slice(1) : '');
                                                             return (
                                                                 <text
                                                                     x={x}
@@ -719,7 +740,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                                     dominantBaseline="central"
                                                                     style={{ fontSize: '12px', fontWeight: 500 }}
                                                                 >
-                                                                    {`${name ? name.charAt(0).toUpperCase() + name.slice(1) : ''} ${(percent * 100).toFixed(0)}%`}
+                                                                    {`${displayName} ${(percent * 100).toFixed(0)}%`}
                                                                 </text>
                                                             );
                                                         }}
@@ -736,25 +757,25 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                         formatter={(value, name, props) => {
                                                             const total = filteredLevels.reduce((a, b) => a + b.value, 0);
                                                             const percent = ((value / total) * 100).toFixed(0);
-                                                            const formattedName = name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+                                                            const formattedName = name ? (text[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1)) : name;
                                                             return [`${value} (${percent}%)`, formattedName];
                                                         }}
                                                     />
                                                     <Legend
                                                         verticalAlign="bottom"
                                                         height={36}
-                                                        formatter={(value) => value ? value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' ') : ''}
+                                                        formatter={(value) => value ? (text[value.toLowerCase()] || value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' ')) : ''}
                                                     />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         ) : (
-                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No level data</div>
+                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>{text.noData || 'No data available'}</div>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="chart-card">
-                                    <h2 className="section-title">Search Methods</h2>
+                                    <h2 className="section-title">{text.searchMethods || 'Search Methods'}</h2>
                                     <div style={{ height: '300px', width: '100%' }}>
                                         {filteredSources.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
@@ -775,6 +796,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                             const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                                             const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
+                                                            const displayName = text[name.toLowerCase()] || (name ? name.charAt(0).toUpperCase() + name.slice(1) : '');
                                                             return (
                                                                 <text
                                                                     x={x}
@@ -784,7 +806,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                                     dominantBaseline="central"
                                                                     style={{ fontSize: '12px', fontWeight: 500 }}
                                                                 >
-                                                                    {`${name ? name.charAt(0).toUpperCase() + name.slice(1) : ''} ${(percent * 100).toFixed(0)}%`}
+                                                                    {`${displayName} ${(percent * 100).toFixed(0)}%`}
                                                                 </text>
                                                             );
                                                         }}
@@ -801,21 +823,21 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                         formatter={(value, name, props) => {
                                                             const total = filteredSources.reduce((a, b) => a + b.value, 0);
                                                             const percent = ((value / total) * 100).toFixed(0);
-                                                            const formattedName = name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+                                                            const formattedName = name ? (text[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1)) : name;
                                                             return [`${value} (${percent}%)`, formattedName];
                                                         }}
                                                     />
-                                                    <Legend verticalAlign="bottom" height={36} formatter={(value) => value ? value.charAt(0).toUpperCase() + value.slice(1) : ''} />
+                                                    <Legend verticalAlign="bottom" height={36} formatter={(value) => value ? (text[value.toLowerCase()] || value.charAt(0).toUpperCase() + value.slice(1)) : ''} />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         ) : (
-                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No source data</div>
+                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>{text.noData || 'No data available'}</div>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="chart-card animate-slide-up delay-200">
-                                    <h2 className="section-title">Language Distribution</h2>
+                                    <h2 className="section-title">{text.languageDistribution || 'Language Distribution'}</h2>
                                     <div style={{ height: '300px', width: '100%' }}>
                                         {filteredLangs.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
@@ -831,10 +853,10 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                         angle={0}
                                                         textAnchor="middle"
                                                         height={40}
-                                                        tickFormatter={(val) => val ? val.charAt(0).toUpperCase() + val.slice(1) : ''}
+                                                        tickFormatter={(val) => val ? (text[val.toLowerCase()] || val.charAt(0).toUpperCase() + val.slice(1)) : ''}
                                                     />
                                                     <YAxis allowDecimals={false} stroke="#9ca3af" tick={{ fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                                                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} labelFormatter={(label) => label ? label.charAt(0).toUpperCase() + label.slice(1) : ''} />
+                                                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} labelFormatter={(label) => label ? (text[label.toLowerCase()] || label.charAt(0).toUpperCase() + label.slice(1)) : ''} />
                                                     <Bar dataKey="value" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={isMobile ? 25 : 40}>
                                                         {filteredLangs.map((entry, index) => {
                                                             const colorMap = { 'english': '#38bdf8', 'telugu': '#a78bfa', 'hindi': '#fbbf24', 'spanish': '#f472b6' };
@@ -844,7 +866,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         ) : (
-                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No language data</div>
+                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>{text.noData || 'No data available'}</div>
                                         )}
                                     </div>
                                 </div>
@@ -852,14 +874,14 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
 
                             <div className="charts-grid">
                                 <div className="chart-card animate-slide-up">
-                                    <h2 className="section-title">User Roles Distribution</h2>
-                                    <div style={{ height: '380px', width: '100%' }}>
+                                    <h2 className="section-title">{text.userRolesDistribution || 'User Roles Distribution'}</h2>
+                                    <div style={{ height: '340px', width: '100%' }}>
                                         {stats.roles_stats && stats.roles_stats.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart margin={{ bottom: 20 }}>
                                                     <Pie
                                                         data={stats.roles_stats}
-                                                        cx="50%" cy="40%" outerRadius={75} fill="#8884d8" dataKey="value"
+                                                        cx="50%" cy="50%" outerRadius={75} fill="#8884d8" dataKey="value"
                                                         paddingAngle={3}
                                                         cornerRadius={4}
                                                         labelLine={true}
@@ -871,6 +893,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
 
                                                             if (percent < 0.05) return null;
 
+                                                            const displayName = text[name.toLowerCase()] || (name ? name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' ') : '');
                                                             return (
                                                                 <text
                                                                     x={x}
@@ -880,7 +903,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                                     dominantBaseline="central"
                                                                     style={{ fontSize: '11px', fontWeight: 500 }}
                                                                 >
-                                                                    {`${name ? name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' ') : ''} ${(percent * 100).toFixed(0)}%`}
+                                                                    {`${displayName} ${(percent * 100).toFixed(0)}%`}
                                                                 </text>
                                                             );
                                                         }}
@@ -893,25 +916,25 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                     <Tooltip
                                                         contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
                                                         itemStyle={{ color: '#fff' }}
-                                                        formatter={(value, name) => [value, name ? name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' ') : name]}
+                                                        formatter={(value, name) => [value, name ? (text[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' ')) : name]}
                                                     />
                                                     <Legend
                                                         verticalAlign="bottom"
                                                         align="center"
                                                         wrapperStyle={{ paddingTop: '10px', fontSize: '0.85rem', width: '100%', left: 0 }}
-                                                        formatter={(value) => value ? value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' ') : ''}
+                                                        formatter={(value) => value ? (text[value.toLowerCase()] || value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' ')) : ''}
                                                     />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         ) : (
-                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No role data</div>
+                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>{text.noData || 'No data available'}</div>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="chart-card animate-slide-up delay-100">
-                                    <h2 className="section-title">Time Spent Per User (Top 5 Active)</h2>
-                                    <div style={{ height: '380px', width: '100%' }}>
+                                    <h2 className="section-title">{text.timeSpentPerUser || 'Time Spent Per User (Top 5 Active)'}</h2>
+                                    <div style={{ height: '340px', width: '100%' }}>
                                         {users && users.filter(u => u.time_spent > 0).length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart
@@ -932,33 +955,33 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                         allowDecimals={false}
                                                         stroke="#9ca3af"
                                                         tick={{ fill: '#6b7280' }}
-                                                        label={{ value: 'Time', angle: -90, position: 'insideLeft', style: { fill: '#6b7280' } }}
+                                                        label={{ value: text.time || 'Time', angle: -90, position: 'insideLeft', style: { fill: '#6b7280' } }}
                                                         tickFormatter={(value) => {
-                                                            if (value < 60) return `${value}m`;
+                                                            if (value < 60) return `${value}${text.mins_abbr || 'm'}`;
                                                             const h = Math.floor(value / 60);
-                                                            return `${h}h`;
+                                                            return `${h}${text.hours_abbr || 'h'}`;
                                                         }}
                                                     />
                                                     <Tooltip
                                                         contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
                                                         formatter={(value) => {
-                                                            if (value < 60) return [`${value}m`, "Time Spent"];
+                                                            if (value < 60) return [`${value}${text.mins_abbr || 'm'}`, text.timeSpent || "Time Spent"];
                                                             const h = Math.floor(value / 60);
                                                             const m = value % 60;
-                                                            return [(m > 0 ? `${h}h ${m}m` : `${h}h`), "Time Spent"];
+                                                            return [(m > 0 ? `${h}${text.hours_abbr || 'h'} ${m}${text.mins_abbr || 'm'}` : `${h}${text.hours_abbr || 'h'}`), text.timeSpent || "Time Spent"];
                                                         }}
                                                     />
-                                                    <Bar dataKey="time_spent_mins" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Time Spent" />
+                                                    <Bar dataKey="time_spent_mins" fill="#f43f5e" radius={[4, 4, 0, 0]} name={text.timeSpent || "Time Spent"} />
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         ) : (
-                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No time data available yet. Users must interact with the app.</div>
+                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>{text.noTimeData || 'No time data available'}</div>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="chart-card animate-slide-up delay-200" style={{ gridColumn: '1 / -1' }}>
-                                    <h2 className="section-title">Daily Searches (Last 30 Days)</h2>
+                                    <h2 className="section-title">{text.dailySearches || 'Daily Searches (Last 30 Days)'}</h2>
                                     <div style={{ height: '300px', width: '100%' }}>
                                         {stats.daily_searches && stats.daily_searches.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
@@ -980,11 +1003,11 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                     />
                                                     <YAxis allowDecimals={false} stroke="#9ca3af" tick={{ fill: '#6b7280' }} />
                                                     <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} />
-                                                    <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Searches" />
+                                                    <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} name={text.searches || "Searches"} />
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         ) : (
-                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No daily search data</div>
+                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>{text.noDailySearchData || 'No daily search data'}</div>
                                         )}
                                     </div>
                                 </div>
@@ -995,7 +1018,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
 
                 <div className="admin-section-grid">
                     <div className="chart-card">
-                        <h2 className="section-title">Search Trend Analysis</h2>
+                        <h2 className="section-title">{text.searchTrendAnalysis || 'Search Trend Analysis'}</h2>
                         <div style={{ height: '350px', width: '100%' }}>
                             {stats.most_searched_words && stats.most_searched_words.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
@@ -1033,20 +1056,20 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                             fill="var(--admin-primary)"
                                             radius={[4, 4, 0, 0]}
                                             barSize={isMobile ? 25 : 40}
-                                            name="Searches"
+                                            name={text.searches || "Searches"}
                                         />
                                     </BarChart>
                                 </ResponsiveContainer>
                             ) : (
                                 <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
-                                    No data available
+                                    {text.noData || 'No data available'}
                                 </div>
                             )}
                         </div>
                     </div>
 
                     <div className="chart-card">
-                        <h2 className="section-title">Top Searches</h2>
+                        <h2 className="section-title">{text.topSearches || 'Top Searches'}</h2>
                         <div className="admin-list">
                             {stats.most_searched_words && stats.most_searched_words.length > 0 ? (
                                 stats.most_searched_words.map((item, index) => (
@@ -1061,7 +1084,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                 ))
                             ) : (
                                 <p style={{ color: '#6b7280', textAlign: 'center', padding: '1rem' }}>
-                                    No records found
+                                    {text.noRecords || 'No records found'}
                                 </p>
                             )}
                         </div>
@@ -1072,18 +1095,18 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                     <div className="admin-modal-overlay" onClick={() => setShowUsersModal(false)}>
                         <div className="admin-modal-content" onClick={(e) => e.stopPropagation()}>
                             <div className="admin-modal-header">
-                                <h2>{viewMode === 'reviews' ? 'User Reviews' : viewMode === 'quiz' ? 'Quiz Players' : viewMode === 'top10' ? 'Top 10 Quizzers' : 'Registered Users Details'}</h2>
+                                <h2>{viewMode === 'reviews' ? (text.userReviews || 'User Reviews') : viewMode === 'quiz' ? (text.quizPlayers || 'Quiz Players') : viewMode === 'top10' ? (text.top10Quizzers || 'Top 10 Quizzers') : (text.registeredUsersDetails || 'Registered Users Details')}</h2>
                                 <button className="admin-close-btn" onClick={() => setShowUsersModal(false)}>×</button>
                             </div>
                             <div className="admin-modal-body">
                                 {loadingUsers ? (
-                                    <div className="loading-text">Loading user data...</div>
+                                    <div className="loading-text">{text.loadingUserData || 'Loading user data...'}</div>
                                 ) : (
                                     <div className="table-container">
                                         <div style={{ marginBottom: '1rem' }}>
                                             <input
                                                 type="text"
-                                                placeholder="Search by username, email, or role..."
+                                                placeholder={text.searchUserPlaceholder || "Search by username, email, or role..."}
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'var(--admin-card)', color: 'var(--admin-text)' }}
@@ -1092,13 +1115,13 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                         <table className="admin-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Username</th>
-                                                    {(viewMode !== 'quiz' && viewMode !== 'top10') && <th>Email</th>}
-                                                    {(viewMode !== 'quiz' && viewMode !== 'top10') && <th>Role</th>}
-                                                    <th>Time Spent</th>
-                                                    {viewMode === 'all' && <th>Videos Watched</th>}
+                                                    <th>{text.username || 'Username'}</th>
+                                                    {(viewMode !== 'quiz' && viewMode !== 'top10') && <th>{text.email || 'Email'}</th>}
+                                                    {(viewMode !== 'quiz' && viewMode !== 'top10') && <th>{text.role || 'Role'}</th>}
+                                                    <th>{text.timeSpent || 'Time Spent'}</th>
+                                                    {viewMode === 'all' && <th>{text.videosWatched || 'Videos Watched'}</th>}
                                                     {viewMode !== 'all' && (
-                                                        <th>{(viewMode === 'quiz' || viewMode === 'top10') ? 'Average Score (Participation)' : 'Reviews'}</th>
+                                                        <th>{(viewMode === 'quiz' || viewMode === 'top10') ? (text.averageScore || 'Average Score (Participation)') : (text.reviews || 'Reviews')}</th>
                                                     )}
                                                 </tr>
                                             </thead>
@@ -1113,18 +1136,18 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                             ) : null}
                                                             {user.username}
                                                         </td>
-                                                        {(viewMode !== 'quiz' && viewMode !== 'top10') && <td className="text-secondary">{user.email || 'N/A'}</td>}
+                                                        {(viewMode !== 'quiz' && viewMode !== 'top10') && <td className="text-secondary">{user.email || (text.na || 'N/A')}</td>}
                                                         {(viewMode !== 'quiz' && viewMode !== 'top10') && (
                                                             <td>
                                                                 <span className={`role-badge ${user.role}`}>
-                                                                    {user.role}
+                                                                    {text[user.role.toLowerCase()] || user.role}
                                                                 </span>
                                                             </td>
                                                         )}
                                                         <td className="text-secondary">
                                                             {(viewMode === 'quiz' || viewMode === 'top10')
                                                                 ? formatDuration(user.quiz_time_spent || 0)
-                                                                : `${Math.floor((user.time_spent || 0) / 60)} mins`
+                                                                : `${Math.floor((user.time_spent || 0) / 60)} ${text.mins || 'mins'}`
                                                             }
                                                         </td>
                                                         {viewMode === 'all' && (
@@ -1136,19 +1159,19 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                                             <td>
                                                                 {(viewMode === 'quiz' || viewMode === 'top10') ? (
                                                                     <span className="font-medium" style={{ color: 'var(--admin-primary)', background: 'var(--admin-bg)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
-                                                                        {user.avg_quiz_score !== undefined && user.avg_quiz_score !== null ? `${user.avg_quiz_score}` : 'Participated'}
+                                                                        {user.avg_quiz_score !== undefined && user.avg_quiz_score !== null ? `${user.avg_quiz_score}` : (text.participated || 'Participated')}
                                                                     </span>
                                                                 ) : viewMode === 'reviews' && user.reviews && user.reviews.length > 0 ? (
                                                                     user.reviews.map((rev, i) => (
                                                                         <div key={i} className="review-item" style={{ marginBottom: '8px' }}>
                                                                             <span className="star-rating" style={{ color: '#f59e0b' }}>{'★'.repeat(rev.rating)}</span>
                                                                             <span className="review-text" style={{ marginLeft: '8px', fontStyle: 'italic' }}>
-                                                                                {rev.comment ? `"${rev.comment.substring(0, 30)}${rev.comment.length > 30 ? '...' : ''}"` : 'No comment'}
+                                                                                {rev.comment ? `"${rev.comment.substring(0, 30)}${rev.comment.length > 30 ? '...' : ''}"` : (text.noComment || 'No comment')}
                                                                             </span>
                                                                         </div>
                                                                     ))
                                                                 ) : (
-                                                                    <span style={{ color: '#9ca3af' }}>No recent data</span>
+                                                                    <span style={{ color: '#9ca3af' }}>{text.noRecentData || 'No recent data'}</span>
                                                                 )}
                                                             </td>
                                                         )}
@@ -1167,14 +1190,14 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                     <div className="export-modal-overlay" onClick={() => setShowExportModal(false)}>
                         <div className="export-modal-content" onClick={e => e.stopPropagation()}>
                             <div className="export-modal-header">
-                                <h2><span>⬇️</span> Data Exports</h2>
+                                <h2><span>⬇️</span> {text.dataExports || 'Data Exports'}</h2>
                                 <button className="close-btn" onClick={() => setShowExportModal(false)}>&times;</button>
                             </div>
                             <div className="export-modal-body">
                                 <div className="export-option-row">
                                     <div className="export-option-info">
-                                        <h4>Quiz Results</h4>
-                                        <p>Detailed user quiz scores.</p>
+                                        <h4>{text.quizResults || 'Quiz Results'}</h4>
+                                        <p>{text.quizResultsDesc || 'Detailed user quiz scores.'}</p>
                                     </div>
                                     <div className="export-btn-group">
                                         <button className="export-btn-premium" onClick={() => handleExportSpecificCSV('quiz')}>📊 CSV</button>
@@ -1183,8 +1206,8 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                 </div>
                                 <div className="export-option-row">
                                     <div className="export-option-info">
-                                        <h4>Search Analytics</h4>
-                                        <p>Individual search histories.</p>
+                                        <h4>{text.searchAnalytics || 'Search Analytics'}</h4>
+                                        <p>{text.searchAnalyticsDesc || 'Individual search histories.'}</p>
                                     </div>
                                     <div className="export-btn-group">
                                         <button className="export-btn-premium" onClick={() => handleExportSpecificCSV('search')}>📊 CSV</button>
@@ -1193,8 +1216,8 @@ export default function AdminDashboard({ isDarkMode, toggleTheme }) {
                                 </div>
                                 <div className="export-option-row">
                                     <div className="export-option-info">
-                                        <h4>Leaderboard</h4>
-                                        <p>Rankings and accuracy rankings.</p>
+                                        <h4>{text.leaderboard || 'Leaderboard'}</h4>
+                                        <p>{text.leaderboardDesc || 'Rankings and accuracy rankings.'}</p>
                                     </div>
                                     <div className="export-btn-group">
                                         <button className="export-btn-premium" onClick={() => handleExportSpecificCSV('leaderboard')}>📊 CSV</button>

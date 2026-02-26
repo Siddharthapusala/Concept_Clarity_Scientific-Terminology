@@ -226,7 +226,7 @@ async def analyze_image(
 @router.get("/quiz")
 def get_user_quiz(
     language: str = Query("English", pattern="^(English|Telugu|Hindi|en|te|hi)$"),
-    level: str = Query("medium", pattern="^(easy|medium|hard)$"),
+    level: str = Query("medium", pattern="^(simple|easy|medium|hard)$"),
     topic: Optional[str] = Query(None, description="Specific topic to generate quiz for"),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -234,6 +234,12 @@ def get_user_quiz(
     try:
         lang_map = {"en": "English", "te": "Telugu", "hi": "Hindi"}
         language = lang_map.get(language, language)
+
+        # Normalize level: 'simple' is an alias for 'easy'
+        if level == "simple":
+            effective_level = "easy"
+        else:
+            effective_level = level
 
         unique_terms = []
 
@@ -260,14 +266,14 @@ def get_user_quiz(
             if not unique_terms:
                 unique_terms = ["Photosynthesis", "Gravity", "DNA", "Solar System", "Atoms", "Force", "Energy", "Elements"]
 
-        if level == "easy":
+        if effective_level == "easy":
             num_q = 5
-        elif level == "medium":
+        elif effective_level == "medium":
             num_q = 10
         else: # hard
             num_q = 20
 
-        quiz_data = llm_service.generate_quiz(unique_terms, level, language, num_questions=num_q)
+        quiz_data = llm_service.generate_quiz(unique_terms, effective_level, language, num_questions=num_q)
         
         if quiz_data.get("error"):
             raise HTTPException(status_code=500, detail=quiz_data["error"])

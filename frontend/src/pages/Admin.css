@@ -41,8 +41,12 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
+    padding: 1.5rem 0;
     border-bottom: 1px solid var(--admin-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--admin-bg);
 }
 
 .admin-title {
@@ -269,6 +273,27 @@
     background: #fef2f2;
     border-color: #fecaca;
     color: #dc2626;
+}
+
+.admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.admin-export-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-header-actions .admin-btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text-main);
 }
 
 .admin-btn-primary {
@@ -510,8 +535,14 @@
     .admin-header-actions {
         width: 100%;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+
+    .admin-export-group {
+        display: flex;
+        gap: 0.5rem;
     }
 
     .admin-title {
@@ -790,6 +821,49 @@
     background: var(--admin-bg);
     transform: translateY(-1px);
 }
+
+.admin-lang-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 1rem;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-lang-selector:hover {
+    border-color: var(--admin-primary);
+    box-shadow: var(--admin-shadow);
+    transform: translateY(-1px);
+}
+
+.lang-icon {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.admin-lang-dropdown {
+    background: transparent;
+    color: var(--admin-text-main);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    font-size: 0.9rem;
+    padding: 0.4rem 0;
+    font-family: inherit;
+}
+
+.admin-lang-dropdown option {
+    background: var(--admin-surface);
+    color: var(--admin-text-main);
+}
+
+/* Removed redundant rules */
 
 .admin-filters-panel {
     transition: all 0.3s ease;

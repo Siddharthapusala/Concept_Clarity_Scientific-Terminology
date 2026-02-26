@@ -115,7 +115,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
           </div>
           <h2 className="auth-title">{text.profile || 'Profile'}</h2>
         </div>
-        <p>Loading...</p>
+        <p>{text.loading || 'Loading...'}</p>
       </div>
     );
   }
@@ -215,7 +215,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
           </div>
           <div className="form-actions">
             <button type="submit" disabled={loading} className="auth-button save-btn">
-              {loading ? 'Saving...' : (text.saveChanges || 'Save Changes')}
+              {loading ? (text.saving || 'Saving...') : (text.saveChanges || 'Save Changes')}
             </button>
             <button type="button" className="nav-button logout-btn" onClick={() => setEdit(false)}>
               {text.cancel || 'Cancel'}
@@ -271,11 +271,11 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
                 ))}
               </div>
               <p className="rating-label">
-                {review.rating === 1 ? 'Poor' :
-                  review.rating === 2 ? 'Fair' :
-                    review.rating === 3 ? 'Good' :
-                      review.rating === 4 ? 'Very Good' :
-                        review.rating === 5 ? 'Excellent!' : 'Tap a star to rate'}
+                {review.rating === 1 ? (text.poor || 'Poor') :
+                  review.rating === 2 ? (text.fair || 'Fair') :
+                    review.rating === 3 ? (text.good || 'Good') :
+                      review.rating === 4 ? (text.veryGood || 'Very Good') :
+                        review.rating === 5 ? (text.excellent || 'Excellent!') : (text.tapStarToRate || 'Tap a star to rate')}
               </p>
             </div>
 
@@ -284,7 +284,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
               <textarea
                 className="form-input"
                 rows="3"
-                placeholder="Tell us what you think..."
+                placeholder={text.tellUsWhatYouThink || "Tell us what you think..."}
                 value={review.comment}
                 onChange={(e) => setReview({ ...review, comment: e.target.value })}
                 disabled={searchLoading}
@@ -298,7 +298,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
                 disabled={searchLoading || review.rating === 0}
                 style={{ flex: 1 }}
               >
-                {searchLoading ? 'Submitting...' : (reviewMessage.includes('Success') ? 'Updated!' : (review.id ? (text.updateReview || 'Update Review') : (text.submitReview || 'Submit Review')))}
+                {searchLoading ? (text.submitting || 'Submitting...') : (reviewMessage.includes('Success') ? (text.updated || 'Updated!') : (review.id ? (text.updateReview || 'Update Review') : (text.submitReview || 'Submit Review')))}
               </button>
               {review.id && (
                 <button
@@ -306,7 +306,7 @@ export default function Profile({ onLogout, language, setLanguage, t }) {
                   onClick={() => { setEditingReview(false); fetchReview(); }}
                   style={{ flex: 1 }}
                 >
-                  Cancel
+                  {text.cancel || 'Cancel'}
                 </button>
               )}
             </div>
