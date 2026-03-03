@@ -751,33 +751,6 @@
   margin-top: 2rem;
 }
 
-.result-line.image-section {
-  display: block;
-  margin-top: 2rem;
-}
-
-.image-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 1rem;
-  border-radius: 1rem;
-  overflow: hidden;
-  background: transparent;
-}
-
-.result-image-large {
-  max-width: 100%;
-  width: auto;
-  max-height: 600px;
-  object-fit: contain;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
-}
-
-.result-image-large:hover {
-  transform: scale(1.02);
-}
 
 .video-container {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

@@ -42,70 +42,6 @@ class FastLLMService:
             print(f"❌ Error fetching video: {e}")
             return None
 
-
-    def get_google_image(self, query: str) -> str:
-        """Fetch the first image result from Google Images with scientific context"""
-        try:
-            refined_query = f"{query} scientific diagram biology chemistry"
-            print(f"🖼️ Fetching Google image for: {refined_query}")
-            search_url = f"https://www.google.com/search?site=&tbm=isch&source=hp&q={refined_query.replace(' ', '+')}"
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-            response = requests.get(search_url, headers=headers, timeout=5)
-            html = response.text
-            
-            urls = re.findall(r'(https://encrypted-tbn0\.gstatic\.com/images\?q=[^"\s\\]+)', html)
-            
-            if urls:
-                image_url = urls[0]
-                print(f"✅ Found Google Image URL: {image_url}")
-                return image_url
-            
-            print("⚠️ No Google image results found.")
-            return None
-        except Exception as e:
-            print(f"❌ Error fetching Google image: {e}")
-            return None
-
-    def get_wiki_image(self, query: str) -> str:
-        """Fetch a high-resolution image from Wikipedia with scientific focus"""
-        try:
-            import wikipedia
-            refined_query = f"{query} biology science"
-            print(f"🖼️ Fetching High-Res Wiki image for: {refined_query}")
-            
-            results = wikipedia.search(refined_query, results=1)
-            if not results:
-                # Try fallback without scientific keywords
-                results = wikipedia.search(query, results=1)
-                
-            if not results:
-                print(f"⚠️ No wiki page found for {query}")
-                return None
-            
-            title = results[0]
-            page = wikipedia.page(title, auto_suggest=True)
-            images = page.images
-            
-            candidates = []
-            for img in images:
-                lower_img = img.lower()
-                if lower_img.endswith(('.jpg', '.jpeg', '.png')):
-                    if any(x in lower_img for x in ['logo', 'icon', 'symbol', 'flag', 'map', 'svg']):
-                        continue
-                    candidates.append(img)
-            
-            if candidates:
-                print(f"✅ Found High-Res Wiki Image: {candidates[0]}")
-                return candidates[0]
-                
-            print("⚠️ No suitable images found on wiki page.")
-            return None
-        except Exception as e:
-            print(f"❌ Error fetching Wiki image: {e}")
-            return None
-
     def get_fast_explanation(self, query: str, language: str = "English", fetch_media: bool = True) -> dict:
         """Get explanation in <1 second using Groq"""
         start_time = time.time()
@@ -186,17 +122,10 @@ class FastLLMService:
                     examples = [f"Real-world example of {query} 1", f"Real-world example of {query} 2"]
 
             video_id = None
-            image_url = None
-
-            video_id = None
-            image_url = None
 
             if fetch_media:
                 media_query = data.get("core_term", query)
                 video_id = self.get_youtube_video(media_query)
-                image_url = self.get_wiki_image(media_query)
-                if not image_url:
-                    image_url = self.get_google_image(media_query)
 
             result = {
                 "translated_term": data.get("translated_term", query),
@@ -208,7 +137,6 @@ class FastLLMService:
                 "related_words": data.get("related_words", ["Science", "Research", "Theory", "Experiment"]),
                 "category": data.get("category", "General Science"),
                 "video_id": video_id,
-                "image_url": image_url,
                 "source": "groq",
                 "time_ms": int((time.time() - start_time) * 1000)
             }
@@ -220,22 +148,17 @@ class FastLLMService:
             return self._get_fallback_explanation(query, start_time, language)
 
     def get_media_only(self, query: str) -> dict:
-        """Fetch strictly media (video + image) for a query"""
+        """Fetch strictly media (video) for a query"""
         start_time = time.time()
         video_id = self.get_youtube_video(query)
-        image_url = self.get_wiki_image(query)
-        if not image_url:
-            image_url = self.get_google_image(query)
             
         return {
             "video_id": video_id,
-            "image_url": image_url,
             "term": query,
             "time_ms": int((time.time() - start_time) * 1000)
         }
 
     def _get_fallback_explanation(self, query: str, start_time: float, language: str = "English") -> dict:
-        # Localized definitions for fallback
         lang_lower = language.lower()
         
         if lang_lower == "telugu":
@@ -271,17 +194,14 @@ class FastLLMService:
             "text": full.get(level, full.get("easy", "Definition not available.")),
             "examples": full.get("examples", []),
             "related_words": full.get("related_words", []),
-            "image_url": full.get("image_url"),
             "video_id": full.get("video_id")
         }
     def get_image_explanation(self, image_bytes: bytes, language: str = "English", level: str = None) -> dict:
         """Analyze image using Groq Vision model with specified difficulty level"""
         start_time = time.time()
         try:
-            # Encode image to base64
             base64_image = base64.b64encode(image_bytes).decode('utf-8')
             
-            # Using the working vision model
             vision_model = "meta-llama/llama-4-maverick-17b-128e-instruct"
             
             lang_instruction = ""
@@ -340,7 +260,6 @@ class FastLLMService:
                 response_content = response_content.split("```")[0].strip()
             data = json.loads(response_content)
             
-            # Fetch YouTube Video
             video_id = self.get_youtube_video(data.get("term", "Science"))
 
             result = {
@@ -411,7 +330,6 @@ class FastLLMService:
                 f"Failure to provide exactly {num_questions} questions will result in a system error."
             )
 
-            # Increase max_tokens for larger quizzes
             if num_questions <= 5:
                 max_tokens = 1500
             elif num_questions <= 10:
@@ -441,7 +359,6 @@ class FastLLMService:
                 if "questions" not in data or not isinstance(data["questions"], list):
                     raise ValueError("JSON missing 'questions' array")
                 
-                # Check question count
                 received_count = len(data["questions"])
                 if received_count != num_questions:
                     print(f"⚠️ LLM returned {received_count} instead of {num_questions}. Prompting for strictness.")

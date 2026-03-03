@@ -8,7 +8,6 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
   const text = t || {};
   const [searchTerm, setSearchTerm] = useState('');
   const [result, setResult] = useState('');
-  const [levels, setLevels] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [level, setLevel] = useState('easy');
@@ -26,7 +25,6 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
   const [feedback, setFeedback] = useState(0);
   const [videoId, setVideoId] = useState(null);
   const [showVideo, setShowVideo] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
 
   const limit = 2;
 
@@ -103,11 +101,9 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
     setLoading(true);
     setError('');
     setResult('');
-    setLevels(null);
     setExamples([]);
     setRelatedWords([]);
     setVideoId(null);
-    setImageUrl(null);
 
     const formData = new FormData();
     formData.append('file', fileToAnalyze);
@@ -131,7 +127,6 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
         if (data.history_id) setHistoryId(data.history_id);
         if (data.related_words) setRelatedWords(data.related_words);
         if (data.video_id) setVideoId(data.video_id);
-        if (data.image_url) setImageUrl(data.image_url);
         setShowImageModal(false);
       }
 
@@ -166,11 +161,9 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
     if (!langOverride) {
       setResult('');
       setTranslatedTerm('');
-      setLevels(null);
       setExamples([]);
       setRelatedWords([]);
       setVideoId(null);
-      setImageUrl(null);
       setShowVideo(false);
     }
 
@@ -185,7 +178,6 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
       setResult(typeof def === 'string' ? def : '');
       if (res.data.translated_term) setTranslatedTerm(res.data.translated_term);
       else setTranslatedTerm(query);
-      setLevels(null);
       if (res.data.history_id) setHistoryId(res.data.history_id);
       setFeedback(0);
       setResultLanguage(searchLang);
@@ -214,7 +206,6 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
       api.get(`/search/media?q=${encodeURIComponent(mediaQuery)}`)
         .then(mediaRes => {
           if (mediaRes.data.video_id) setVideoId(mediaRes.data.video_id);
-          if (mediaRes.data.image_url) setImageUrl(mediaRes.data.image_url);
         })
         .catch(err => console.error("Media fetch error:", err));
 
@@ -598,7 +589,6 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
                           key={opt.code}
                           className={`lang-chip ${resultLanguage === opt.code ? 'active' : ''}`}
                           onClick={() => {
-                            setLanguage(opt.code);
                             handleSearch(null, searchTerm, opt.code);
                           }}
                         >
@@ -714,16 +704,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
                         </div>
                       </div>
                     )}
-                    {imageUrl && (
-                      <div className="result-line image-section" style={{ marginTop: '2rem' }}>
-                        <div className="line-header">
-                          <span className="label-title">Related Image:</span>
-                        </div>
-                        <div className="image-container" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
-                          <img src={imageUrl} alt="Related concept" className="result-image-large" />
-                        </div>
-                      </div>
-                    )}
+
                   </div>
                 </>
               )}

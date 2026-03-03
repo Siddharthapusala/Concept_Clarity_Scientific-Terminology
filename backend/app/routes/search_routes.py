@@ -67,7 +67,6 @@ def search_term(
                 "examples": level_details.get("examples", []),
                 "related_words": level_details.get("related_words", []),
                 "video_id": level_details.get("video_id") if fetch_media else None,
-                "image_url": level_details.get("image_url") if fetch_media else None,
                 "source": "llm",
                 "confidence": "medium"
             }
@@ -83,7 +82,6 @@ def search_term(
                 "examples": llm_explanation.get("examples", []) if isinstance(llm_explanation, dict) else [],
                 "related_words": llm_explanation.get("related_words", []) if isinstance(llm_explanation, dict) else [],
                 "video_id": llm_explanation.get("video_id") if isinstance(llm_explanation, dict) else None,
-                "image_url": llm_explanation.get("image_url") if isinstance(llm_explanation, dict) else None,
                 "source": "llm",
                 "confidence": "medium"
             }
@@ -235,7 +233,6 @@ def get_user_quiz(
         lang_map = {"en": "English", "te": "Telugu", "hi": "Hindi"}
         language = lang_map.get(language, language)
 
-        # Normalize level: 'simple' is an alias for 'easy'
         if level == "simple":
             effective_level = "easy"
         else:
@@ -243,24 +240,21 @@ def get_user_quiz(
 
         unique_terms = []
 
-        # If a specific topic is requested, use only that topic
         if topic and topic.strip():
             unique_terms = [topic.strip()]
         else:
-            # Otherwise, get recent search terms for the user
             history = db.query(SearchHistory).filter(
                 SearchHistory.user_id == user.id,
-                SearchHistory.query.notlike("[%]%") # Ignore image/voice prefixes if they exist
+                SearchHistory.query.notlike("[%]%")
             ).order_by(SearchHistory.created_at.desc()).limit(20).all()
 
-            # Extract unique terms
             terms_set = set()
             for h in history:
                 term = h.query.strip().lower()
                 if term and term not in terms_set:
                     terms_set.add(term)
                     unique_terms.append(h.query)
-                if len(unique_terms) >= 5: # Take up to 5 unique terms
+                if len(unique_terms) >= 5:
                     break
 
             if not unique_terms:
@@ -270,7 +264,7 @@ def get_user_quiz(
             num_q = 5
         elif effective_level == "medium":
             num_q = 10
-        else: # hard
+        else:
             num_q = 20
 
         quiz_data = llm_service.generate_quiz(unique_terms, effective_level, language, num_questions=num_q)
@@ -338,8 +332,6 @@ def get_quiz_leaderboard(
         if difficulty:
             query = query.filter(QuizResult.difficulty == difficulty)
             
-        # Order by highest score percentage, then by most total questions, then by most recent
-        # We calculate percentage as score * 1.0 / total_questions in the order_by
         results = query.order_by(
             (QuizResult.score * 1.0 / QuizResult.total_questions).desc(),
             QuizResult.total_questions.desc(),
