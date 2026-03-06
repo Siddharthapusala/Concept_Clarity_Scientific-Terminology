@@ -246,6 +246,41 @@
   animation: slideIn 0.3s ease;
 }
 
+.autocorrect-notice {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  margin-top: 1rem;
+  display: inline-block;
+  animation: slideIn 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.notice-text {
+  color: white;
+  font-size: 0.95rem;
+}
+
+.corrected-term {
+  color: #fbbf24;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: all 0.2s;
+}
+
+.corrected-term:hover {
+  color: #f59e0b;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+
+.original-term {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
 .loading-message {
   background: rgba(255, 255, 255, 0.9);
   color: #2b6cb0;

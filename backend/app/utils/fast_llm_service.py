@@ -61,13 +61,15 @@ class FastLLMService:
 
             prompt = (
                 f"Explain '{query}' at three levels in {language} ({lang_instruction}). Return STRICT JSON only. "
-                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term', 'core_term'). "
+                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term', 'core_term', 'is_corrected', 'corrected_term'). "
                 f"Values MUST be in {language} script, EXCEPT 'core_term' which MUST be the single most relevant scientific English term (e.g. 'Cell structure'). "
                 f"\nRequirements:\n{line_constraint}\n"
                 f"Format: "
                 f"{{"
                 f"  \"core_term\": \"[Single scientific English term]\", "
-                f"  \"translated_term\": \"[The translation of '{query}' in {language}]\", "
+                f"  \"translated_term\": \"[The translation of the CORRECTED version of '{query}' in {language}]\", "
+                f"  \"is_corrected\": [true/false if there was a typo in '{query}'], "
+                f"  \"corrected_term\": \"[The corrected version of '{query}' in {language} if is_corrected is true, else '{query}']\", "
                 f"  \"easy\": \"[Explanation in {language}]\", "
                 f"  \"medium\": \"[Explanation in {language}]\", "
                 f"  \"hard\": \"[Explanation in {language}]\", "
@@ -81,12 +83,17 @@ class FastLLMService:
             
 
             system_prompt = (
-                f"You are a strict science tutor fluent in {language}. "
+                f"You are a world-class science tutor fluent in {language}. "
                 f"You must output valid JSON. "
                 f"IMPORTANT: JSON Keys must be in English. Values must be in {language}. "
-                f"If the user query has a typo (e.g., 'pyysics'), assume the correct scientific term (e.g., 'Physics') and explain that term. "
-                f"Do not output English text for the explanations."
-                f"If {language} is Telugu, use legible and standard Telugu grammar."
+                f"TYPO DETECTION (STRICT): If the user enters a misspelled scientific word (like 'conept', 'cheistry', 'pyysics'), you MUST correct it. "
+                f"1. 'is_corrected' MUST be true. "
+                f"2. 'corrected_term' MUST be the single correct scientific term in {language} (e.g., 'Concept'). "
+                f"3. 'translated_term' MUST be the SAME as 'corrected_term'. "
+                f"4. 'core_term' MUST be the English equivalent. "
+                f"5. Base ALL explanations on the CORRECTED word. "
+                f"CRITICAL: DO NOT use the misspelled word '{query}' anywhere in the JSON values. The misspelled word should NEVER appear in 'corrected_term' or 'translated_term'."
+                f"If there is no typo, 'is_corrected' is false and 'corrected_term' is '{query}'."
             )
             
             completion = self.client.chat.completions.create(
@@ -130,6 +137,8 @@ class FastLLMService:
             result = {
                 "translated_term": data.get("translated_term", query),
                 "core_term": data.get("core_term", query),
+                "is_corrected": data.get("is_corrected", False),
+                "corrected_term": data.get("corrected_term", query),
                 "easy": data.get("easy", easy_def),
                 "medium": data.get("medium", easy_def),
                 "hard": data.get("hard", easy_def),
@@ -194,7 +203,9 @@ class FastLLMService:
             "text": full.get(level, full.get("easy", "Definition not available.")),
             "examples": full.get("examples", []),
             "related_words": full.get("related_words", []),
-            "video_id": full.get("video_id")
+            "video_id": full.get("video_id"),
+            "is_corrected": full.get("is_corrected", False),
+            "corrected_term": full.get("corrected_term", query)
         }
     def get_image_explanation(self, image_bytes: bytes, language: str = "English", level: str = None) -> dict:
         """Analyze image using Groq Vision model with specified difficulty level"""

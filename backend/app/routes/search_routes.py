@@ -62,7 +62,9 @@ def search_term(
             definition = level_details.get("text", "")
             
             result_data = {
-                "term": q,
+                "term": level_details.get("corrected_term", q),
+                "is_corrected": level_details.get("is_corrected", False),
+                "corrected_term": level_details.get("corrected_term", q),
                 "definition": definition,
                 "examples": level_details.get("examples", []),
                 "related_words": level_details.get("related_words", []),
@@ -74,7 +76,9 @@ def search_term(
             llm_explanation = llm_service.get_fast_explanation(q, language, fetch_media=fetch_media)
             definition = llm_explanation.get("easy") if isinstance(llm_explanation, dict) else llm_explanation
             result_data = {
-                "term": q,
+                "term": llm_explanation.get("corrected_term", q) if isinstance(llm_explanation, dict) else q,
+                "is_corrected": llm_explanation.get("is_corrected", False) if isinstance(llm_explanation, dict) else False,
+                "corrected_term": llm_explanation.get("corrected_term", q) if isinstance(llm_explanation, dict) else q,
                 "translated_term": llm_explanation.get("translated_term", q) if isinstance(llm_explanation, dict) else q,
                 "core_term": llm_explanation.get("core_term", q) if isinstance(llm_explanation, dict) else q,
                 "definition": definition,

@@ -138,6 +138,10 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
     }
   };
 
+  const [isCorrected, setIsCorrected] = useState(false);
+  const [correctedTermOutput, setCorrectedTermOutput] = useState('');
+  const [originalTerm, setOriginalTerm] = useState('');
+
   const handleSearch = async (e, termOverride = null, langOverride = null) => {
     if (e && e.preventDefault) e.preventDefault();
     const query = termOverride || searchTerm;
@@ -157,6 +161,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
 
     setLoading(true);
     setError('');
+    setIsCorrected(false);
 
     if (!langOverride) {
       setResult('');
@@ -176,9 +181,21 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
       const def = res.data.definition || res.data.message;
 
       setResult(typeof def === 'string' ? def : '');
-      if (res.data.translated_term) setTranslatedTerm(res.data.translated_term);
-      else setTranslatedTerm(query);
+
+      const mainTerm = res.data.corrected_term || res.data.translated_term || query;
+      setTranslatedTerm(mainTerm);
+
       if (res.data.history_id) setHistoryId(res.data.history_id);
+
+      if (res.data.is_corrected || (res.data.corrected_term && res.data.corrected_term.toLowerCase() !== query.toLowerCase())) {
+        setIsCorrected(true);
+        setCorrectedTermOutput(res.data.corrected_term || res.data.translated_term);
+        setOriginalTerm(query);
+        setSearchTerm(res.data.corrected_term || res.data.translated_term); // Update search bar
+      } else {
+        setIsCorrected(false);
+      }
+
       setFeedback(0);
       setResultLanguage(searchLang);
 
@@ -568,7 +585,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
                 <>
                   <div className="result-header">
                     <div className="result-header-top">
-                      <h2>{translatedTerm || searchTerm}</h2>
+                      <h2>{translatedTerm}</h2>
                       {videoId && (
                         <button
                           className="video-toggle-btn"
