@@ -61,11 +61,13 @@ class FastLLMService:
 
             prompt = (
                 f"Explain '{query}' at three levels in {language} ({lang_instruction}). Return STRICT JSON only. "
-                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term', 'core_term', 'is_corrected', 'corrected_term'). "
+                f"Is this a scientific term? If it is not a scientific term or a misspelling of one, set 'is_scientific' to false. "
+                f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term', 'core_term', 'is_corrected', 'corrected_term', 'is_scientific'). "
                 f"Values MUST be in {language} script, EXCEPT 'core_term' which MUST be the single most relevant scientific English term (e.g. 'Cell structure'). "
                 f"\nRequirements:\n{line_constraint}\n"
                 f"Format: "
                 f"{{"
+                f"  \"is_scientific\": [true/false], "
                 f"  \"core_term\": \"[Single scientific English term]\", "
                 f"  \"translated_term\": \"[The translation of the CORRECTED version of '{query}' in {language}]\", "
                 f"  \"is_corrected\": [true/false if there was a typo in '{query}'], "
@@ -77,6 +79,7 @@ class FastLLMService:
                 f"  \"related_words\": [\"[Word 1 in {language}]\", \"[Word 2 in {language}]\", \"[Word 3 in {language}]\", \"[Word 4 in {language}]\", \"[Word 5 in {language}]\"] "
                 f"}}"
                 f"MANDATORY: Provide strict line counts and at least 2 concrete examples. "
+                f"If 'is_scientific' is false, keep all explanation fields as 'This is not a scientific term.' in {language} and examples/related_words as empty arrays. "
                 f"Ensure examples are real-world. "
                 f"CRITICAL: The content of the definitions and examples MUST be in {language}. Do not provide English text."
             )
@@ -86,7 +89,9 @@ class FastLLMService:
                 f"You are a world-class science tutor fluent in {language}. "
                 f"You must output valid JSON. "
                 f"IMPORTANT: JSON Keys must be in English. Values must be in {language}. "
-                f"TYPO DETECTION (STRICT): If the user enters a misspelled scientific word (like 'conept', 'cheistry', 'pyysics'), you MUST correct it. "
+                f"SCIENTIFIC TERM DETECTION: First determine if the user query is a scientific term or closely related to science. "
+                f"If the term is NOT scientific (e.g., common objects like 'pizza', 'chair', 'movie', or greetings like 'hello'), set 'is_scientific' to false and provide a polite message in the language requested. "
+                f"TYPO DETECTION (STRICT): If the user enters a misspelled scientific word (like 'conept', 'cheistry', 'pyysics'), you MUST correct it and set 'is_scientific' to true. "
                 f"1. 'is_corrected' MUST be true. "
                 f"2. 'corrected_term' MUST be the single correct scientific term in {language} (e.g., 'Concept'). "
                 f"3. 'translated_term' MUST be the SAME as 'corrected_term'. "
@@ -118,6 +123,34 @@ class FastLLMService:
                 print(f"❌ JSON Decode Error for {language}")
                 raise Exception("Invalid JSON received from LLM")
             
+            is_scientific = data.get("is_scientific", True)
+            
+            if not is_scientific:
+                not_sci_msg = ""
+                if language.lower() == "telugu":
+                     not_sci_msg = f"'{query}' అనేది శాస్త్రీయ పదం కాదు. దయచేసి శాస్త్రీయ పదాలను మాత్రమే నమోదు చేయండి."
+                elif language.lower() == "hindi":
+                     not_sci_msg = f"'{query}' कोई वैज्ञानिक शब्द नहीं है। कृपया केवल वैज्ञानिक शब्द ही दर्ज करें।"
+                else:
+                     not_sci_msg = f"'{query}' is not a scientific term. Please enter scientific terms only."
+                
+                return {
+                    "is_scientific": False,
+                    "translated_term": query,
+                    "core_term": query,
+                    "is_corrected": False,
+                    "corrected_term": query,
+                    "easy": not_sci_msg,
+                    "medium": not_sci_msg,
+                    "hard": not_sci_msg,
+                    "examples": [],
+                    "related_words": [],
+                    "category": "Non-Scientific",
+                    "video_id": None,
+                    "source": "groq",
+                    "time_ms": int((time.time() - start_time) * 1000)
+                }
+
             easy_def = data.get("easy") or data.get("medium") or f"{query} involves complex scientific principles."
             examples = data.get("examples", [])
             if not examples or len(examples) < 2:
@@ -135,6 +168,7 @@ class FastLLMService:
                 video_id = self.get_youtube_video(media_query)
 
             result = {
+                "is_scientific": True,
                 "translated_term": data.get("translated_term", query),
                 "core_term": data.get("core_term", query),
                 "is_corrected": data.get("is_corrected", False),

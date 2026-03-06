@@ -59,9 +59,11 @@ def search_term(
 
         if level:
             level_details = llm_service.get_level_details(q, level, language)
+            is_scientific = level_details.get("is_scientific", True)
             definition = level_details.get("text", "")
             
             result_data = {
+                "is_scientific": is_scientific,
                 "term": level_details.get("corrected_term", q),
                 "is_corrected": level_details.get("is_corrected", False),
                 "corrected_term": level_details.get("corrected_term", q),
@@ -70,12 +72,15 @@ def search_term(
                 "related_words": level_details.get("related_words", []),
                 "video_id": level_details.get("video_id") if fetch_media else None,
                 "source": "llm",
-                "confidence": "medium"
+                "confidence": "medium" if is_scientific else "high"
             }
         else:
             llm_explanation = llm_service.get_fast_explanation(q, language, fetch_media=fetch_media)
+            is_scientific = llm_explanation.get("is_scientific", True) if isinstance(llm_explanation, dict) else True
             definition = llm_explanation.get("easy") if isinstance(llm_explanation, dict) else llm_explanation
+            
             result_data = {
+                "is_scientific": is_scientific,
                 "term": llm_explanation.get("corrected_term", q) if isinstance(llm_explanation, dict) else q,
                 "is_corrected": llm_explanation.get("is_corrected", False) if isinstance(llm_explanation, dict) else False,
                 "corrected_term": llm_explanation.get("corrected_term", q) if isinstance(llm_explanation, dict) else q,
@@ -87,10 +92,10 @@ def search_term(
                 "related_words": llm_explanation.get("related_words", []) if isinstance(llm_explanation, dict) else [],
                 "video_id": llm_explanation.get("video_id") if isinstance(llm_explanation, dict) else None,
                 "source": "llm",
-                "confidence": "medium"
+                "confidence": "medium" if is_scientific else "high"
             }
 
-        if user:
+        if user and is_scientific:
             summary_result = definition
             if len(summary_result) > 200:
                 summary_result = summary_result[:200] + "..."
