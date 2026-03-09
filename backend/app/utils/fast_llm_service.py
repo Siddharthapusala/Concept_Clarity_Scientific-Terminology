@@ -14,8 +14,6 @@ class FastLLMService:
         self.api_key = os.getenv("GROQ_API_KEY")
         if not self.api_key:
             print("❌ GROQ_API_KEY not found in environment!")
-        else:
-            print(f"✅ Groq Service Initialized (Key: {self.api_key[:5]}...)")
         self.client = Groq(api_key=self.api_key)
         self.text_model = "llama-3.3-70b-versatile"
         self.fast_text_model = "llama-3.1-8b-instant"
@@ -23,7 +21,6 @@ class FastLLMService:
     def get_youtube_video(self, query: str) -> str:
         """Fetch the first YouTube video result for a query via scraping"""
         try:
-            print(f"🎬 Fetching video for: {query}")
             refined_query = f"{query} science biology"
             search_query = refined_query.replace(" ", "+")
             url = f"https://www.youtube.com/results?search_query={search_query}&sp=EgIQAQ%253D%253D"
@@ -33,10 +30,8 @@ class FastLLMService:
             video_ids = re.findall(r"watch\?v=(\S{11})", response.text)
             if video_ids:
                 video_id = video_ids[0]
-                print(f"✅ Found video ID: {video_id}")
                 return video_id
             
-            print("⚠️ No video results found.")
             return None
         except Exception as e:
             print(f"❌ Error fetching video: {e}")
@@ -72,6 +67,7 @@ class FastLLMService:
                 f"  \"translated_term\": \"[The translation of the CORRECTED version of '{query}' in {language}]\", "
                 f"  \"is_corrected\": [true/false if there was a typo in '{query}'], "
                 f"  \"corrected_term\": \"[The corrected version of '{query}' in {language} if is_corrected is true, else '{query}']\", "
+                f"  \"is_scientific\": [true/false], "
                 f"  \"easy\": \"[Explanation in {language}]\", "
                 f"  \"medium\": \"[Explanation in {language}]\", "
                 f"  \"hard\": \"[Explanation in {language}]\", "
@@ -86,7 +82,7 @@ class FastLLMService:
             
 
             system_prompt = (
-                f"You are a world-class science tutor fluent in {language}. "
+                f"You are a strict world-class science tutor fluent in {language}. You ONLY explain scientific concepts. "
                 f"You must output valid JSON. "
                 f"IMPORTANT: JSON Keys must be in English. Values must be in {language}. "
                 f"SCIENTIFIC TERM DETECTION: First determine if the user query is a scientific term or closely related to science. "
@@ -97,7 +93,7 @@ class FastLLMService:
                 f"3. 'translated_term' MUST be the SAME as 'corrected_term'. "
                 f"4. 'core_term' MUST be the English equivalent. "
                 f"5. Base ALL explanations on the CORRECTED word. "
-                f"CRITICAL: DO NOT use the misspelled word '{query}' anywhere in the JSON values. The misspelled word should NEVER appear in 'corrected_term' or 'translated_term'."
+                f"CRITICAL RULES: DO NOT use the misspelled word '{query}' anywhere in the JSON values. The misspelled word should NEVER appear in 'corrected_term' or 'translated_term'. "
                 f"If there is no typo, 'is_corrected' is false and 'corrected_term' is '{query}'."
             )
             
@@ -163,9 +159,22 @@ class FastLLMService:
 
             video_id = None
 
+            is_scientific = data.get("is_scientific", True)
+            
+            # Robust safeguard: force is_scientific to false if the rejection message is present
+            rejection_phrase = "is not a scientific term"
+            if rejection_phrase in easy_def.lower():
+                is_scientific = False
+
             if fetch_media:
                 media_query = data.get("core_term", query)
                 video_id = self.get_youtube_video(media_query)
+
+            # Ensure clean titles for non-scientific terms
+            final_term = query
+            final_translated = data.get("translated_term", query)
+            if not is_scientific:
+                final_translated = query
 
             result = {
                 "is_scientific": True,
@@ -173,6 +182,7 @@ class FastLLMService:
                 "core_term": data.get("core_term", query),
                 "is_corrected": data.get("is_corrected", False),
                 "corrected_term": data.get("corrected_term", query),
+                "is_scientific": is_scientific,
                 "easy": data.get("easy", easy_def),
                 "medium": data.get("medium", easy_def),
                 "hard": data.get("hard", easy_def),
@@ -205,15 +215,15 @@ class FastLLMService:
         lang_lower = language.lower()
         
         if lang_lower == "telugu":
-            definition = f"'{query}' అనేది ఒక శాస్త్రీయ భావన. దీని గురించి సమాచారం సేకరిస్తున్నాము. దయచేసి కాసేపు ఆగి ప్రయత్నించండి."
+            definition = f"'{query}' అనేది ఒక శాస్త్రీయ భావన కాదు, దయచేసి శాస్త్రీయ పదాలను మాత్రమే నమోదు చేయండి."
             examples = [f"{query} యొక్క ఉదాహరణ", "మరొక ఉదాహరణ"]
             related = ["శాస్త్రం", "పరిశోధన", "సిద్ధాంతం"]
         elif lang_lower == "hindi":
-            definition = f"'{query}' एक वैज्ञानिक अवधारणा है। हम इसके बारे में जानकारी प्राप्त कर रहे हैं। कृपया कुछ समय बाद पुनः प्रयास करें।"
+            definition = f"'{query}' एक वैज्ञानिक शब्द नहीं है। कृपया केवल वैज्ञानिक शब्द दर्ज करें।"
             examples = [f"{query} का उदाहरण", "एक और उदाहरण"]
             related = ["विज्ञान", "अनुसंधान", "सिद्धांत"]
         else:
-            definition = f"{query} is a scientific concept. It is interesting."
+            definition = f"'{query}' is not a scientific term. Please enter scientific terms only."
             examples = [f"Study of {query}", f"Application of {query}"]
             related = ["Science", "Theory", "Hypothesis", "Experiment", "Research"]
 
@@ -223,6 +233,7 @@ class FastLLMService:
             "hard": definition,
             "examples": examples,
             "related_words": related,
+            "is_scientific": False,
             "category": "Science",
             "source": "fallback",
             "time_ms": int((time.time() - start_time) * 1000)
@@ -239,7 +250,8 @@ class FastLLMService:
             "related_words": full.get("related_words", []),
             "video_id": full.get("video_id"),
             "is_corrected": full.get("is_corrected", False),
-            "corrected_term": full.get("corrected_term", query)
+            "corrected_term": full.get("corrected_term", query),
+            "is_scientific": full.get("is_scientific", True)
         }
     def get_image_explanation(self, image_bytes: bytes, language: str = "English", level: str = None) -> dict:
         """Analyze image using Groq Vision model with specified difficulty level"""
@@ -270,7 +282,7 @@ class FastLLMService:
                 f"Return STRICT JSON only. "
                 f"Format: "
                 f"{{"
-                f"  \"term\": \"[Name of the concept in {language}]\", "
+                f"  \"term\": \"[Name of the scientific concept in {language}]\", "
                 f"  \"definition\": \"[Clear explanation in {language} matching the requested level]\", "
                 f"  \"related_words\": [\"[Word 1]\", \"[Word 2]\"] "
                 f"}}"
@@ -309,7 +321,7 @@ class FastLLMService:
 
             result = {
                 "term": data.get("term", "Image Analysis"),
-                "definition": data.get("definition", "Detailed scientific explanation provided by AI."),
+                "definition": data.get("definition", "Detailed explanation provided by AI."),
                 "history_id": None, # Will be set by route if user logged in
                 "related_words": data.get("related_words", []),
                 "video_id": video_id,
@@ -405,8 +417,6 @@ class FastLLMService:
                     raise ValueError("JSON missing 'questions' array")
                 
                 received_count = len(data["questions"])
-                if received_count != num_questions:
-                    print(f"⚠️ LLM returned {received_count} instead of {num_questions}. Prompting for strictness.")
             except Exception:
                 raise Exception("Invalid JSON received from LLM for Quiz")
 

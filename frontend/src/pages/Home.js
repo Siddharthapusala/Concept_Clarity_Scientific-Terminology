@@ -141,6 +141,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
   const [isCorrected, setIsCorrected] = useState(false);
   const [correctedTermOutput, setCorrectedTermOutput] = useState('');
   const [originalTerm, setOriginalTerm] = useState('');
+  const [isScientific, setIsScientific] = useState(true);
 
   const handleSearch = async (e, termOverride = null, langOverride = null) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -181,6 +182,9 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
       const def = res.data.definition || res.data.message;
 
       setResult(typeof def === 'string' ? def : '');
+
+      const isSci = res.data.is_scientific !== false;
+      setIsScientific(isSci);
 
       const mainTerm = res.data.corrected_term || res.data.translated_term || query;
       setTranslatedTerm(mainTerm);
@@ -688,7 +692,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
                         })()}
                       </div>
                     </div>
-                    {examples && examples.length > 0 && examples.some(ex => ex && ex.trim().length > 3) ? (
+                    {isScientific && examples && examples.length > 0 && examples.some(ex => ex && ex.trim().length > 3) ? (
                       <div className="result-line example-block">
                         <div className="line-header">
                           <span className="label-title">{resultText.examples || 'Examples:'}</span>
@@ -700,7 +704,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
                         </ul>
                       </div>
                     ) : null}
-                    {relatedWords && relatedWords.length > 0 && (
+                    {isScientific && relatedWords && relatedWords.length > 0 && (
                       <div className="result-line related-block">
                         <div className="line-header">
                           <span className="label-title">{resultText.relatedWords || 'Related Words:'}</span>

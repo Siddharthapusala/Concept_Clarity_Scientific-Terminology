@@ -228,6 +228,18 @@ export default function Signup({ t, onLanguageChange }) {
                 {passwordStrength.message}
               </span>
             </div>
+            {formData.password && (
+              <div className="password-requirements">
+                {passwordStrength.requirements.map((req, index) => (
+                  <div key={index} className={`requirement ${req.test ? 'met' : 'unmet'}`}>
+                    <span className="requirement-icon">
+                      {req.test ? '✅' : '○'}
+                    </span>
+                    {req.message}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="confirmPassword" className="form-label">{text.confirmPassword || 'Confirm Password'}</label>
@@ -253,6 +265,15 @@ export default function Signup({ t, onLanguageChange }) {
                 {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
+            {formData.confirmPassword && (
+              <div className="password-match">
+                <span className={`match-text ${formData.password === formData.confirmPassword ? 'match' : 'mismatch'}`}>
+                  {formData.password === formData.confirmPassword
+                    ? (text.passwordsMatch || 'Passwords match ✅')
+                    : (text.passwordsDoNotMatch || 'Passwords do not match ❌')}
+                </span>
+              </div>
+            )}
           </div>
           <div className="form-actions">
             <button type="submit" disabled={loading} className="auth-button">
