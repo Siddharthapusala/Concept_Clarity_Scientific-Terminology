@@ -13,7 +13,7 @@ class FastLLMService:
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY")
         if not self.api_key:
-            print("❌ GROQ_API_KEY not found in environment!")
+            print("[ERROR] GROQ_API_KEY not found in environment!")
         self.client = Groq(api_key=self.api_key)
         self.text_model = "llama-3.3-70b-versatile"
         self.fast_text_model = "llama-3.1-8b-instant"
@@ -34,7 +34,7 @@ class FastLLMService:
             
             return None
         except Exception as e:
-            print(f"❌ Error fetching video: {e}")
+            print(f"[ERROR] Error fetching video: {e}")
             return None
 
     def get_fast_explanation(self, query: str, language: str = "English", fetch_media: bool = True) -> dict:
@@ -83,34 +83,35 @@ class FastLLMService:
                 f"You are a strict world-class science tutor fluent in {language}. You ONLY explain scientific concepts. "
                 f"You must output valid JSON. "
                 f"IMPORTANT: JSON Keys must be in English. Values must be in {language}. "
-                f"NON-SCIENTIFIC TERM REJECTION (CRITICAL): If '{query}' is NOT a scientific term (e.g., 'movie', 'actor', 'politics', 'cat'), you MUST refuse to explain it. "
-                f"In this case (NON-SCIENTIFIC): "
+                f"SCIENTIFIC TERM DETECTION: Determine if '{query}' is a scientific term, a subtopic of science, or a misspelled scientific term. "
+                f"If it is NOT scientific (e.g., 'movie', 'actor', 'pizza', 'hello'), follow the REJECTION rules below. "
+                f"If it IS scientific OR a misspelled scientific term, follow the EXPLANATION and CORRECTION rules. "
+                f"\nREJECTION rules (For non-scientific terms like 'pizza'): "
                 f"1. Set 'is_scientific' to false. "
-                f"2. Set 'translated_term' and 'corrected_term' to EXACTLY '{query}'. "
-                f"3. Set 'core_term' to '{query}'. "
-                f"4. Set the 'easy', 'medium', and 'hard' fields EXACTLY to: \"'{query}' is not a scientific term. Please enter scientific terms only.\" Translate this message to {language} if {language} is not English. "
-                f"If it IS a scientific term, set 'is_scientific' to true. "
-                f"TYPO DETECTION (STRICT): If the user enters a misspelled scientific word (like 'conept', 'cheistry'), you MUST correct it. "
-                f"1. 'is_corrected' MUST be true. "
-                f"2. 'corrected_term' MUST be the single correct scientific term in {language} (e.g., 'Concept'). "
-                f"3. 'translated_term' MUST be the SAME as 'corrected_term'. "
-                f"4. 'core_term' MUST be the English equivalent. "
-                f"5. Base ALL explanations on the CORRECTED word. "
-                f"CRITICAL RULES: DO NOT use the misspelled word '{query}' anywhere in the JSON values. The misspelled word should NEVER appear in 'corrected_term' or 'translated_term'. "
-                f"If there is no typo, 'is_corrected' is false and 'corrected_term' is '{query}'."
+                f"2. Set 'translated_term', 'corrected_term', and 'core_term' to '{query}'. "
+                f"3. Set 'easy', 'medium', and 'hard' fields EXACTLY to: \"'{query}' is not a scientific term. Please enter scientific terms only.\" Translate this message to {language} if {language} is not English. "
+                f"\nCORRECTION rules (For misspelled scientific terms like 'photonsynthesis' or 'chemstry'): "
+                f"1. You MUST correct it. Set 'is_scientific' to true. "
+                f"2. 'is_corrected' MUST be true. "
+                f"3. 'corrected_term' MUST be the single correct scientific term in {language} (e.g., 'Photosynthesis'). "
+                f"4. 'translated_term' MUST be the SAME as 'corrected_term'. "
+                f"5. 'core_term' MUST be the English equivalent. "
+                f"6. Base ALL explanations on the CORRECTED word. "
+                f"\nCRITICAL RULES: If there is no typo, 'is_corrected' is false and 'corrected_term' is '{query}'. "
+                f"The misspelled word should NEVER appear in 'corrected_term' or 'translated_term'."
             )
             
-            completion = self.client.chat.completions.create(
+            chat_completion = self.client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
-                model=self.text_model,
+                model=self.fast_text_model,  # Switch to faster 8b model for explanation
                 response_format={"type": "json_object"},
-                temperature=0.3,
-                max_tokens=4000
+                temperature=0.4,
+                max_tokens=2000
             )
-            response_content = completion.choices[0].message.content
+            response_content = chat_completion.choices[0].message.content
             
             try:
                 start_idx = response_content.find('{')
@@ -119,7 +120,7 @@ class FastLLMService:
                     response_content = response_content[start_idx:end_idx+1]
                 data = json.loads(response_content)
             except json.JSONDecodeError:
-                print(f"❌ JSON Decode Error for {language}")
+                print(f"[ERROR] JSON Decode Error for {language}")
                 raise Exception("Invalid JSON received from LLM")
             
             is_scientific = data.get("is_scientific", True)
@@ -163,11 +164,6 @@ class FastLLMService:
             video_id = None
 
             is_scientific = data.get("is_scientific", True)
-            
-            # Robust safeguard: force is_scientific to false if the rejection message is present
-            rejection_phrase = "is not a scientific term"
-            if rejection_phrase in easy_def.lower():
-                is_scientific = False
 
             if fetch_media:
                 media_query = data.get("core_term", query)
@@ -198,7 +194,7 @@ class FastLLMService:
             return result
         except Exception as e:
             import traceback
-            print(f"❌ Groq Text Error: {e}")
+            print(f"[ERROR] Groq Text Error: {e}")
             print(traceback.format_exc())
             return self._get_fallback_explanation(query, start_time, language)
 
@@ -216,18 +212,21 @@ class FastLLMService:
     def _get_fallback_explanation(self, query: str, start_time: float, language: str = "English") -> dict:
         lang_lower = language.lower()
         
+        # Determine if this might be a rate limit / server error based on timing or context
+        # If it happens very fast, it might be a rate limit error handled in get_fast_explanation
+        
         if lang_lower == "telugu":
-            definition = f"'{query}' అనేది ఒక శాస్త్రీయ భావన కాదు, దయచేసి శాస్త్రీయ పదాలను మాత్రమే నమోదు చేయండి."
-            examples = [f"{query} యొక్క ఉదాహరణ", "మరొక ఉదాహరణ"]
-            related = ["శాస్త్రం", "పరిశోధన", "సిద్ధాంతం"]
+            definition = "క్షమించండి, సర్వర్ ప్రస్తుతం బిజీగా ఉంది. దయచేసి కాసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."
+            examples = []
+            related = []
         elif lang_lower == "hindi":
-            definition = f"'{query}' एक वैज्ञानिक शब्द नहीं है। कृपया केवल वैज्ञानिक शब्द दर्ज करें।"
-            examples = [f"{query} का उदाहरण", "एक और उदाहरण"]
-            related = ["विज्ञान", "अनुसंधान", "सिद्धांत"]
+            definition = "क्षमा करें, सर्वर अभी व्यस्त है। कृपया कुछ समय बाद पुनः प्रयास करें।"
+            examples = []
+            related = []
         else:
-            definition = f"'{query}' is not a scientific term. Please enter scientific terms only."
-            examples = [f"Study of {query}", f"Application of {query}"]
-            related = ["Science", "Theory", "Hypothesis", "Experiment", "Research"]
+            definition = "The service is temporarily under heavy load. Please try again in a few moments."
+            examples = []
+            related = []
 
         return {
             "easy": definition,
@@ -235,9 +234,9 @@ class FastLLMService:
             "hard": definition,
             "examples": examples,
             "related_words": related,
-            "is_scientific": False,
+            "is_scientific": True, # Assume scientific to avoid false rejection during busy times
             "category": "Science",
-            "source": "fallback",
+            "source": "fallback_error",
             "time_ms": int((time.time() - start_time) * 1000)
         }
     def get_level_details(self, query: str, level: str, language: str = "English") -> dict:
@@ -334,7 +333,7 @@ class FastLLMService:
             return result
 
         except Exception as e:
-            print(f"❌ Groq Vision Error: {e}")
+            print(f"[ERROR] Groq Vision Error: {e}")
             return {
                 "term": "Error",
                 "definition": "Unable to analyze image at this time.",
@@ -429,7 +428,7 @@ class FastLLMService:
             }
 
         except Exception as e:
-            print(f"❌ Groq Quiz Generation Error: {e}")
+            print(f"[ERROR] Groq Quiz Generation Error: {e}")
     def transcribe_audio(self, audio_bytes: bytes, language: str = "en") -> dict:
         """Transcribe audio using Groq Whisper model"""
         start_time = time.time()
@@ -456,7 +455,7 @@ class FastLLMService:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
         except Exception as e:
-            print(f"❌ Groq Transcription Error: {e}")
+            print(f"[ERROR] Groq Transcription Error: {e}")
             return {"error": str(e)}
 
 llm_service = FastLLMService()
