@@ -13,7 +13,7 @@ class FastLLMService:
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY")
         if not self.api_key:
-            pass
+            print("❌ GROQ_API_KEY not found in environment!")
         self.client = Groq(api_key=self.api_key)
         self.text_model = "llama-3.3-70b-versatile"
         self.fast_text_model = "llama-3.1-8b-instant"
@@ -34,6 +34,7 @@ class FastLLMService:
             
             return None
         except Exception as e:
+            print(f"❌ Error fetching video: {e}")
             return None
 
     def get_fast_explanation(self, query: str, language: str = "English", fetch_media: bool = True) -> dict:
@@ -55,13 +56,11 @@ class FastLLMService:
 
             prompt = (
                 f"Explain '{query}' at three levels in {language} ({lang_instruction}). Return STRICT JSON only. "
-                f"Is this a scientific term? If it is not a scientific term or a misspelling of one, set 'is_scientific' to false. "
                 f"JSON Keys must be in English ('easy', 'medium', 'hard', 'examples', 'related_words', 'translated_term', 'core_term', 'is_corrected', 'corrected_term', 'is_scientific'). "
                 f"Values MUST be in {language} script, EXCEPT 'core_term' which MUST be the single most relevant scientific English term (e.g. 'Cell structure'). "
                 f"\nRequirements:\n{line_constraint}\n"
                 f"Format: "
-                f"{{"
-                f"  \"is_scientific\": [true/false], "
+                f"{{\n"
                 f"  \"core_term\": \"[Single scientific English term]\", "
                 f"  \"translated_term\": \"[The translation of the CORRECTED version of '{query}' in {language}]\", "
                 f"  \"is_corrected\": [true/false if there was a typo in '{query}'], "
@@ -84,9 +83,14 @@ class FastLLMService:
                 f"You are a strict world-class science tutor fluent in {language}. You ONLY explain scientific concepts. "
                 f"You must output valid JSON. "
                 f"IMPORTANT: JSON Keys must be in English. Values must be in {language}. "
-                f"SCIENTIFIC TERM DETECTION: First determine if the user query is a scientific term or closely related to science. "
-                f"If the term is NOT scientific (e.g., common objects like 'pizza', 'chair', 'movie', or greetings like 'hello'), set 'is_scientific' to false and provide a polite message in the language requested. "
-                f"TYPO DETECTION (STRICT): If the user enters a misspelled scientific word (like 'conept', 'cheistry', 'pyysics'), you MUST correct it and set 'is_scientific' to true. "
+                f"NON-SCIENTIFIC TERM REJECTION (CRITICAL): If '{query}' is NOT a scientific term (e.g., 'movie', 'actor', 'politics', 'cat'), you MUST refuse to explain it. "
+                f"In this case (NON-SCIENTIFIC): "
+                f"1. Set 'is_scientific' to false. "
+                f"2. Set 'translated_term' and 'corrected_term' to EXACTLY '{query}'. "
+                f"3. Set 'core_term' to '{query}'. "
+                f"4. Set the 'easy', 'medium', and 'hard' fields EXACTLY to: \"'{query}' is not a scientific term. Please enter scientific terms only.\" Translate this message to {language} if {language} is not English. "
+                f"If it IS a scientific term, set 'is_scientific' to true. "
+                f"TYPO DETECTION (STRICT): If the user enters a misspelled scientific word (like 'conept', 'cheistry'), you MUST correct it. "
                 f"1. 'is_corrected' MUST be true. "
                 f"2. 'corrected_term' MUST be the single correct scientific term in {language} (e.g., 'Concept'). "
                 f"3. 'translated_term' MUST be the SAME as 'corrected_term'. "
@@ -115,6 +119,7 @@ class FastLLMService:
                     response_content = response_content[start_idx:end_idx+1]
                 data = json.loads(response_content)
             except json.JSONDecodeError:
+                print(f"❌ JSON Decode Error for {language}")
                 raise Exception("Invalid JSON received from LLM")
             
             is_scientific = data.get("is_scientific", True)
@@ -175,8 +180,7 @@ class FastLLMService:
                 final_translated = query
 
             result = {
-                "is_scientific": True,
-                "translated_term": data.get("translated_term", query),
+                "translated_term": final_translated,
                 "core_term": data.get("core_term", query),
                 "is_corrected": data.get("is_corrected", False),
                 "corrected_term": data.get("corrected_term", query),
@@ -193,6 +197,9 @@ class FastLLMService:
             }
             return result
         except Exception as e:
+            import traceback
+            print(f"❌ Groq Text Error: {e}")
+            print(traceback.format_exc())
             return self._get_fallback_explanation(query, start_time, language)
 
     def get_media_only(self, query: str) -> dict:
@@ -422,7 +429,7 @@ class FastLLMService:
             }
 
         except Exception as e:
-            pass
+            print(f"❌ Groq Quiz Generation Error: {e}")
     def transcribe_audio(self, audio_bytes: bytes, language: str = "en") -> dict:
         """Transcribe audio using Groq Whisper model"""
         start_time = time.time()
@@ -449,6 +456,7 @@ class FastLLMService:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
         except Exception as e:
+            print(f"❌ Groq Transcription Error: {e}")
             return {"error": str(e)}
 
 llm_service = FastLLMService()

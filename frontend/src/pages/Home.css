@@ -604,7 +604,7 @@
   border-radius: 0.5rem;
 }
 
-.result-card.dark .level-badge {
+.result-card.dark-mode .level-badge {
   color: #e2e8f0;
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.25);
@@ -1029,13 +1029,13 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.result-card.dark .related-word-chip {
+.result-card.dark-mode .related-word-chip {
   background: rgba(255, 255, 255, 0.1);
   color: #e2e8f0;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.result-card.dark .related-word-chip:hover {
+.result-card.dark-mode .related-word-chip:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
@@ -1104,7 +1104,7 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.result-card.dark .concept-block {
+.result-card.dark-mode .concept-block {
   color: #f7fafc;
   border-color: rgba(255, 255, 255, 0.1);
 }
@@ -1124,9 +1124,9 @@
   font-weight: 600;
 }
 
-.result-card.dark .def-sub-block strong,
-.result-card.dark .expl-sub-block strong,
-.result-card.dark .app-sub-block strong {
+.result-card.dark-mode .def-sub-block strong,
+.result-card.dark-mode .expl-sub-block strong,
+.result-card.dark-mode .app-sub-block strong {
   color: #cbd5e0;
 }
 
@@ -1137,7 +1137,7 @@
   border-left: 4px solid #4299e1;
 }
 
-.result-card.dark .app-sub-block {
+.result-card.dark-mode .app-sub-block {
   background: rgba(66, 153, 225, 0.15);
 }
 

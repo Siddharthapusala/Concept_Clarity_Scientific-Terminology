@@ -50,7 +50,6 @@ class AppReview(Base):
     comment = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-
 class QuizResult(Base):
     __tablename__ = "quiz_results"
     
