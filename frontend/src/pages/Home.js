@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import './Home.css';
 import { translations } from '../utils/translations';
 
-export default function Home({ isAuthenticated, language, setLanguage, t, recordAppTime }) {
+export default function Home({ isAuthenticated, isDarkMode, language, setLanguage, t, recordAppTime }) {
   const text = t || {};
   const [searchTerm, setSearchTerm] = useState('');
   const [result, setResult] = useState('');
@@ -560,7 +560,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
       {
         result && (
           <div className="result-section">
-            <div className="result-card">
+            <div className={`result-card ${isDarkMode ? 'dark-mode' : ''}`}>
               {showVideo && videoId ? (
                 <div className="video-card-content">
                   <div className="result-header">
@@ -588,6 +588,7 @@ export default function Home({ isAuthenticated, language, setLanguage, t, record
               ) : (
                 <>
                   <div className="result-header">
+
                     <div className="result-header-top">
                       <h2>{translatedTerm}</h2>
                       {videoId && (

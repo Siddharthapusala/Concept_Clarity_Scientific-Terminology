@@ -56,6 +56,14 @@ function App() {
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
   };
 
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [isDarkMode]);
+
   const handleLanguageChange = (lang) => {
     setLanguage(lang);
     localStorage.setItem('language', lang);

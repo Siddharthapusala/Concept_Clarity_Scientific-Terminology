@@ -292,7 +292,6 @@ def get_user_quiz(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Quiz Endpoint Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate quiz. Server context error.")
 
 
@@ -327,7 +326,6 @@ def save_quiz_result(
             created_at=new_result.created_at
         )
     except Exception as e:
-        print(f"Error saving quiz result: {e}")
         raise HTTPException(status_code=500, detail="Failed to save quiz score")
 
 
@@ -365,7 +363,6 @@ def get_quiz_leaderboard(
             
         return leaderboard
     except Exception as e:
-        print(f"Error fetching leaderboard: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch leaderboard")
 @router.post("/transcribe")
 async def transcribe(

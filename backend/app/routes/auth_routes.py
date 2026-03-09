@@ -84,7 +84,6 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Login error: {str(e)}")
         raise HTTPException(500, f"Login failed: {str(e)}")
 
 

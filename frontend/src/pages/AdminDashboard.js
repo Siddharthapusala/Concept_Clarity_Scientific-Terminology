@@ -15,7 +15,7 @@ export default function AdminDashboard({ isDarkMode, toggleTheme, t, language })
     const [adminLanguage, setAdminLanguage] = useState(() => {
         return localStorage.getItem('adminLanguage') || 'en';
     });
-    const text = translations[adminLanguage] || translations['en'];
+    const text = translations[adminLanguage] || translations[language] || translations['en'];
     const [stats, setStats] = useState(null);
     const [error, setError] = useState('');
     const [showUsersModal, setShowUsersModal] = useState(false);

@@ -42,7 +42,7 @@ export default function Navbar({ isAuthenticated, onLogout, isDarkMode, toggleTh
   };
 
   return (
-    <nav className={`navbar ${isDarkMode ? 'dark' : ''}`}>
+    <nav className={`navbar ${isDarkMode ? 'dark-mode' : ''}`}>
       <div className="nav-container">
         <Link to="/" className="nav-logo">
           <span className="logo-icon">🧠</span>

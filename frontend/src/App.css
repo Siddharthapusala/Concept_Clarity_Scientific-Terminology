@@ -243,10 +243,9 @@ html {
   scroll-behavior: smooth;
 }
 
-.dark-mode {
-  background-color: #0f172a;
+body.dark-mode {
+  background: #0f172a;
   color: #e2e8f0;
-  min-height: 100vh;
 }
 
 .dark-mode .app {

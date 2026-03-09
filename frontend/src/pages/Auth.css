@@ -280,6 +280,12 @@
   background: #f7fafc;
   border-radius: 0.5rem;
   border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .password-requirements {
+  background: #0f172a;
+  border-color: #334155;
 }
 
 .requirement {

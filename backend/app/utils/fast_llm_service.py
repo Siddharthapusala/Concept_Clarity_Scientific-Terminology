@@ -13,7 +13,7 @@ class FastLLMService:
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY")
         if not self.api_key:
-            print("❌ GROQ_API_KEY not found in environment!")
+            pass
         self.client = Groq(api_key=self.api_key)
         self.text_model = "llama-3.3-70b-versatile"
         self.fast_text_model = "llama-3.1-8b-instant"
@@ -34,7 +34,6 @@ class FastLLMService:
             
             return None
         except Exception as e:
-            print(f"❌ Error fetching video: {e}")
             return None
 
     def get_fast_explanation(self, query: str, language: str = "English", fetch_media: bool = True) -> dict:
@@ -116,7 +115,6 @@ class FastLLMService:
                     response_content = response_content[start_idx:end_idx+1]
                 data = json.loads(response_content)
             except json.JSONDecodeError:
-                print(f"❌ JSON Decode Error for {language}")
                 raise Exception("Invalid JSON received from LLM")
             
             is_scientific = data.get("is_scientific", True)
@@ -195,9 +193,6 @@ class FastLLMService:
             }
             return result
         except Exception as e:
-            import traceback
-            print(f"❌ Groq Text Error: {e}")
-            print(traceback.format_exc())
             return self._get_fallback_explanation(query, start_time, language)
 
     def get_media_only(self, query: str) -> dict:
@@ -427,7 +422,7 @@ class FastLLMService:
             }
 
         except Exception as e:
-            print(f"❌ Groq Quiz Generation Error: {e}")
+            pass
     def transcribe_audio(self, audio_bytes: bytes, language: str = "en") -> dict:
         """Transcribe audio using Groq Whisper model"""
         start_time = time.time()
@@ -454,7 +449,6 @@ class FastLLMService:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
         except Exception as e:
-            print(f"❌ Groq Transcription Error: {e}")
             return {"error": str(e)}
 
 llm_service = FastLLMService()

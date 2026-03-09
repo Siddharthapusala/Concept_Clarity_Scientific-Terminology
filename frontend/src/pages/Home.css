@@ -307,7 +307,7 @@
   margin-bottom: 2rem;
 }
 
-.result-card.dark {
+.result-card.dark-mode {
   background: #0f172a;
   color: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -319,7 +319,7 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
-.result-card.dark .result-header {
+.result-card.dark-mode .result-header {
   border-bottom-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -329,7 +329,7 @@
   font-weight: 700;
 }
 
-.result-card.dark .result-header h2 {
+.result-card.dark-mode .result-header h2 {
   color: #ffffff;
 }
 
@@ -416,18 +416,18 @@
   transform: scale(1.1);
 }
 
-.result-card.dark .feedback-btn {
+.result-card.dark-mode .feedback-btn {
   background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
 }
 
-.result-card.dark .feedback-btn.active {
+.result-card.dark-mode .feedback-btn.active {
   background: rgba(59, 130, 246, 0.5);
   border-color: #3b82f6;
 }
 
-.result-card.dark .result-content {
+.result-card.dark-mode .result-content {
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -477,13 +477,13 @@
   box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);
 }
 
-.result-card.dark .lang-chip {
+.result-card.dark-mode .lang-chip {
   background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #e2e8f0;
 }
 
-.result-card.dark .lang-chip.active {
+.result-card.dark-mode .lang-chip.active {
   background: #667eea;
   border-color: #667eea;
   color: white;
@@ -525,11 +525,11 @@
   color: #4a5568;
 }
 
-.result-card.dark .speaker-btn {
+.result-card.dark-mode .speaker-btn {
   color: #ffffff;
 }
 
-.result-card.dark .speaker-btn:hover {
+.result-card.dark-mode .speaker-btn:hover {
   color: rgba(255, 255, 255, 0.85);
 }
 
@@ -539,7 +539,7 @@
   color: #2d3748;
 }
 
-.result-card.dark .label-title {
+.result-card.dark-mode .label-title {
   color: #ffffff;
 }
 
@@ -547,7 +547,7 @@
   color: #334155;
 }
 
-.result-card.dark .label-value {
+.result-card.dark-mode .label-value {
   color: rgba(255, 255, 255, 0.9);
 }
 
