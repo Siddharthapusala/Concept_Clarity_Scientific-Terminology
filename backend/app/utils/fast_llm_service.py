@@ -169,7 +169,7 @@ class FastLLMService:
                 media_query = data.get("core_term", query)
                 video_id = self.get_youtube_video(media_query)
 
-            # Ensure clean titles for non-scientific terms
+     
             final_term = query
             final_translated = data.get("translated_term", query)
             if not is_scientific:
@@ -212,8 +212,7 @@ class FastLLMService:
     def _get_fallback_explanation(self, query: str, start_time: float, language: str = "English") -> dict:
         lang_lower = language.lower()
         
-        # Determine if this might be a rate limit / server error based on timing or context
-        # If it happens very fast, it might be a rate limit error handled in get_fast_explanation
+       
         
         if lang_lower == "telugu":
             definition = "క్షమించండి, సర్వర్ ప్రస్తుతం బిజీగా ఉంది. దయచేసి కాసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."
@@ -234,7 +233,7 @@ class FastLLMService:
             "hard": definition,
             "examples": examples,
             "related_words": related,
-            "is_scientific": True, # Assume scientific to avoid false rejection during busy times
+            "is_scientific": True, 
             "category": "Science",
             "source": "fallback_error",
             "time_ms": int((time.time() - start_time) * 1000)
@@ -260,7 +259,7 @@ class FastLLMService:
         try:
             base64_image = base64.b64encode(image_bytes).decode('utf-8')
             
-            vision_model = "meta-llama/llama-4-maverick-17b-128e-instruct"
+            vision_model = "meta-llama/llama-4-scout-17b-16e-instruct"
             
             lang_instruction = ""
             if language.lower() == "telugu":
@@ -304,7 +303,7 @@ class FastLLMService:
                         ],
                     }
                 ],
-                model="meta-llama/llama-4-maverick-17b-128e-instruct",
+                model=vision_model,
                 temperature=0.7,
                 max_tokens=1024,
                 response_format={"type": "json_object"},
