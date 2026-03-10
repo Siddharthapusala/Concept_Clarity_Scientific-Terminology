@@ -133,7 +133,7 @@ export default function Signup({ t, onLanguageChange }) {
           </div>
           <h2 className="auth-title">{text.createAccountTitle || 'Create Your Account'}</h2>
         </div>
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
             <label htmlFor="email" className="form-label">{text.email || 'Email Address'}</label>
@@ -144,7 +144,7 @@ export default function Signup({ t, onLanguageChange }) {
               placeholder={text.enterYourEmail || "Enter your email"}
               value={formData.email}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${error === (text.validEmailAddress || 'Please enter a valid email address') ? 'error-input' : ''}`}
               disabled={loading}
               autoComplete="email"
             />

@@ -199,6 +199,17 @@
   cursor: not-allowed;
 }
 
+.form-input.error-input {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  background: #fef2f2;
+}
+
+.dark-mode .form-input.error-input {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: #ef4444;
+}
+
 .form-input::placeholder {
   color: #9ca3af;
 }
